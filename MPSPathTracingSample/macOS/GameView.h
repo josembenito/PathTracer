@@ -11,11 +11,10 @@
 
 @interface GameView : MTKView
 - (void) viewWillMoveToWindow:(NSWindow *)newWindow;
-- (void)keyDown:(NSEvent *)event;
+
+- (void)keyUp:(NSEvent *)event;
 - (BOOL)acceptsFirstResponder;
 
-
-- (void)mouseMoved:(NSEvent *)event;
 @property (weak, nonatomic) NSViewController* viewController;
 @end
 

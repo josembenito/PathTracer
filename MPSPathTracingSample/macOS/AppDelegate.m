@@ -16,7 +16,7 @@ Implementation for our macOS Application Delegate
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
     NSStoryboard *storyboard = [NSStoryboard storyboardWithName:@"Main" bundle:nil];
-    NSWindowController *windowController = (NSWindowController*)[storyboard instantiateControllerWithIdentifier:@"SceneView"];
+    NSWindowController *windowController = (NSWindowController*)[storyboard instantiateControllerWithIdentifier:@"SceneViewWindow"];
     if (windowController) {
         [windowController showWindow:self];
     }

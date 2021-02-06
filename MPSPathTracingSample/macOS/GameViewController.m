@@ -15,6 +15,7 @@ Implementation for our macOS view controller
     GameView * _view;
     Renderer *_renderer;
     NSPoint prevMouseLocation;
+
 }
 
 - (void)viewDidLoad
@@ -62,13 +63,21 @@ Implementation for our macOS view controller
     _view.viewController = self;
     
     prevMouseLocation = [NSEvent mouseLocation];
+
 }
--(void) globalMouseEntered: (NSEvent *) event
+
+-(void) mouseEnteredView: (NSEvent *) event
 {
     prevMouseLocation = [NSEvent mouseLocation];
 }
 
--(bool) globalKeyDown: (NSEvent *) event
+-(void) mouseExitedView: (NSEvent *) event
+{
+    prevMouseLocation = [NSEvent mouseLocation];
+
+}
+
+-(bool) viewEvent: (NSEvent *) event
 {
     bool ret = false;
     float x = 0, y = 0, z = 0, rx = 0, ry = 0;
@@ -114,15 +123,25 @@ Implementation for our macOS view controller
             ret = true;
         }
     }
-    if ([event type] == NSEventTypeMouseMoved) {
+    else if ([event type] == NSEventTypeLeftMouseDragged) {
         NSPoint mouseLocation = [NSEvent mouseLocation];
         NSPoint mouseDelta;
         mouseDelta.x = mouseLocation.x-prevMouseLocation.x;
         mouseDelta.y = mouseLocation.y-prevMouseLocation.y;
         prevMouseLocation = mouseLocation;
-        ry=-mouseDelta.x*0.01f;
-        rx=mouseDelta.y*0.01f;
-        ret = true;
+        NSLog(@"mouse dragged:%lu",(unsigned long)[NSEvent pressedMouseButtons]);
+        if ([NSEvent pressedMouseButtons] == 1) {
+            ry=-mouseDelta.x*0.01f;
+            rx=mouseDelta.y*0.01f;
+            ret = true;
+        }
+    }
+    else if ([event type] == NSEventTypeLeftMouseDown) {
+        prevMouseLocation = [NSEvent mouseLocation];
+        NSLog(@"mouseDown");
+    }
+    else if ([event type] == NSEventTypeLeftMouseUp) {
+        NSLog(@"mouseUp");
     }
     if (ret) {
         [_renderer moveCameraWithSpeedX:x Y:y Z:z RX:rx RY:ry];

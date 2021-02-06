@@ -25,27 +25,82 @@
 - (void)keyUp:(NSEvent *)event
 {
     GameViewController* gameViewController = (GameViewController*) self.viewController;
-    if (! [gameViewController globalKeyDown:event]) {
-        [super keyDown:event];
+    if (! [gameViewController viewEvent:event]) {
+        [super keyUp:event];
     }
     NSLog(@"%hu",event.keyCode);
     
 }
 
+- (void)mouseDown:(NSEvent *)event
+{
+    GameViewController* gameViewController = (GameViewController*) self.viewController;
+    if (! [gameViewController viewEvent:event]) {
+        [super mouseDown:event];
+    }
+}
+
+- (void)mouseUp:(NSEvent *)event
+{
+    GameViewController* gameViewController = (GameViewController*) self.viewController;
+    if (! [gameViewController viewEvent:event]) {
+        [super mouseUp:event];
+    }
+}
+
+-(void)mouseDragged:(NSEvent *)event
+{
+    GameViewController* gameViewController = (GameViewController*) self.viewController;
+    [gameViewController viewEvent:event];
+}
+
 - (void)mouseEntered:(NSEvent *)event
 {
     GameViewController* gameViewController = (GameViewController*) self.viewController;
-    [gameViewController globalMouseEntered:event];
+    [gameViewController mouseEnteredView:event];
 }
+
+- (void)mouseExited:(NSEvent *)event
+{
+    GameViewController* gameViewController = (GameViewController*) self.viewController;
+    [gameViewController mouseEnteredView:event];
+}
+
 
 - (void)mouseMoved:(NSEvent *)event {
     GameViewController* gameViewController = (GameViewController*) self.viewController;
-    if (! [gameViewController globalKeyDown:event]) {
+    if (! [gameViewController viewEvent:event]) {
 
     }
 }
 - (IBAction)onButtonPushed:(id)sender {
-    NSLog(@"Hello");
+    // Create the File Open Dialog class.
+    NSOpenPanel* openDlg = [NSOpenPanel openPanel];
+
+    // Enable the selection of files in the dialog.
+    [openDlg setCanChooseFiles:YES];
+
+    // Multiple files not allowed
+    [openDlg setAllowsMultipleSelection:NO];
+
+    // Can't select a directory
+    [openDlg setCanChooseDirectories:NO];
+
+    // Display the dialog. If the OK button was pressed,
+    // process the files.
+    if ( [openDlg runModal] == NSModalResponseOK )
+    {
+        // Get an array containing the full filenames of all
+        // files and directories selected.
+        NSArray* urls = [openDlg URLs];
+
+        // Loop through all the files and process them.
+        for(int i = 0; i < [urls count]; i++ )
+        {
+            NSString* url = [urls objectAtIndex:i];
+            NSLog(@"Url: %@", url);
+        }
+    }
 }
 
 - (BOOL)acceptsFirstResponder
