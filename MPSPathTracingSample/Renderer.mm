@@ -12,6 +12,9 @@ Implementation for platform independent renderer class
 #import "Transforms.h"
 #import "ShaderTypes.h"
 #import "Scene.h"
+#import "AAPLImage.h"
+
+#define RENDER_MESH
 
 using namespace simd;
 
@@ -20,6 +23,7 @@ static const size_t alignedUniformsSize = (sizeof(Uniforms) + 255) & ~255;
 
 static const size_t rayStride = 48;
 static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitiveIndexCoordinates);
+ 
 
 @implementation Renderer
 {
@@ -33,12 +37,16 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     
     id <MTLBuffer> _vertexPositionBuffer;
     id <MTLBuffer> _vertexNormalBuffer;
-    id <MTLBuffer> _vertexColorBuffer;
+//    id <MTLBuffer> _vertexColorBuffer;
+    id <MTLBuffer> _vertexCoordsBuffer;
     id <MTLBuffer> _rayBuffer;
     id <MTLBuffer> _shadowRayBuffer;
     id <MTLBuffer> _intersectionBuffer;
     id <MTLBuffer> _uniformBuffer;
     id <MTLBuffer> _triangleMaskBuffer;
+    id <MTLBuffer> _materialIdsBuffer;
+    id <MTLBuffer> _indexBuffer;
+    
     
     id <MTLComputePipelineState> _rayPipeline;
     id <MTLComputePipelineState> _shadePipeline;
@@ -49,6 +57,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     id <MTLTexture> _renderTargets[2];
     id <MTLTexture> _accumulationTargets[2];
     id <MTLTexture> _randomTexture;
+    NSArray* _colorTexture;
+//    id <MTLTexture> _colorTexture[MaterialSize];
     
     dispatch_semaphore_t _sem;
     CGSize _size;
@@ -56,6 +66,14 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     NSUInteger _uniformBufferIndex;
 
     unsigned int _frameIndex;
+    
+    float _posX,_posY,_posZ;
+    float _rotX, _rotY;
+    float _lightY;
+    vec3 _rootPosition;
+    bool _makeFrameDirty;
+    Node _rootSceneNode;
+    float _scaleValue;
 }
 
 -(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
@@ -73,11 +91,24 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
         _sem = dispatch_semaphore_create(maxFramesInFlight);
         
+        _lightY = 0.f;
+        _rootPosition = vec3(0,0,0);
+        _scaleValue = 1.f;
+        
         [self loadMetal];
         [self createPipelines];
         [self createScene];
         [self createBuffers];
         [self createIntersector];
+        
+        _posX = 0;
+        _posY = 1;
+        _posZ = 1.38f;
+        
+        _rotX = 0; _rotY = 0;
+        
+        _makeFrameDirty = false;
+        
     }
 
     return self;
@@ -85,6 +116,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
 - (void)loadMetal
 {
+
+    
     // Configure view
     _view.colorPixelFormat = MTLPixelFormatRGBA16Float;
     _view.sampleCount = 1;
@@ -164,41 +197,47 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
 - (void)createScene
 {
-    float4x4 transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) *
-                         matrix4x4_scale(0.5f, 1.98f, 0.5f);
+    _lightY = 1.95f;
+#ifdef RENDER_MESH
+//    _scaleValue = 0.25f;
+//    loadMesh("Cube","gltf");
+    _scaleValue = 0.0001f;
+    
+
+    _lightY = 2.5f;
+    _rootPosition = vec3(0.0f, 2.6, 0.0f);
+      loadMesh("scene","gltf");
+
+#endif
+    
+    
+    float4x4 transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(0.5f, _lightY, 0.5f);
     
     // Light source
-    createCube(FACE_MASK_POSITIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true,
-               TRIANGLE_MASK_LIGHT);
+    createCube(FACE_MASK_POSITIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
     
-    transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(2.0f, 2.0f, 2.0f);
-    
-    // Top, bottom, and back walls
-    createCube(FACE_MASK_NEGATIVE_Y | FACE_MASK_POSITIVE_Y | FACE_MASK_NEGATIVE_Z, vector3(0.725f, 0.71f, 0.68f), transform, true, TRIANGLE_MASK_GEOMETRY);
-    
+     transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(2.f, 2.f, 2.f);
+       // Top, bottom, and back walls
+//    createCube(FACE_MASK_NEGATIVE_Y | FACE_MASK_POSITIVE_Y | FACE_MASK_NEGATIVE_Z, vector3(0.725f, 0.71f, 0.68f), transform, true, TRIANGLE_MASK_GEOMETRY, ConcreteMaterial);
+
     // Left wall
-    createCube(FACE_MASK_NEGATIVE_X, vector3(0.63f, 0.065f, 0.05f), transform, true,
-               TRIANGLE_MASK_GEOMETRY);
-    
+//    createCube(FACE_MASK_NEGATIVE_X, vector3(0.63f, 0.065f, 0.05f), transform, true, TRIANGLE_MASK_GEOMETRY, RedConcreteMaterial);
+
     // Right wall
-    createCube(FACE_MASK_POSITIVE_X, vector3(0.14f, 0.45f, 0.091f), transform, true,
-               TRIANGLE_MASK_GEOMETRY);
-    
-    transform = matrix4x4_translation(0.3275f, 0.3f, 0.3725f) *
-    matrix4x4_rotation(-0.3f, vector3(0.0f, 1.0f, 0.0f)) *
-    matrix4x4_scale(0.6f, 0.6f, 0.6f);
-    
-    // Short box
-    createCube(FACE_MASK_ALL, vector3(0.725f, 0.71f, 0.68f), transform, false,
-               TRIANGLE_MASK_GEOMETRY);
-    
-    transform = matrix4x4_translation(-0.335f, 0.6f, -0.29f) *
-    matrix4x4_rotation(0.3f, vector3(0.0f, 1.0f, 0.0f)) *
-    matrix4x4_scale(0.6f, 1.2f, 0.6f);
-    
+//    createCube(FACE_MASK_POSITIVE_X, vector3(0.14f, 0.45f, 0.091f), transform, true, TRIANGLE_MASK_GEOMETRY, GreenConcreteMaterial);
+				
+//    transform = matrix4x4_translation(-0.335f, 0.6f, -0.29f) * matrix4x4_rotation(0.3f, vector3(0.0f, 1.0f, 0.0f)) * matrix4x4_scale(0.6f, 1.2f, 0.6f);
+
     // Tall box
-    createCube(FACE_MASK_ALL, vector3(0.725f, 0.71f, 0.68f), transform, false,
-               TRIANGLE_MASK_GEOMETRY);
+//    createCube(FACE_MASK_ALL, vector3(0.725f, 0.71f, 0.68f), transform, false, TRIANGLE_MASK_GEOMETRY, PlywoodMaterial);
+
+//    transform = matrix4x4_translation(0.3275f, 0.3f, 0.3725f) * matrix4x4_rotation(-0.3f, vector3(0.0f, 1.0f, 0.0f)) * matrix4x4_scale(0.6f, 0.6f, 0.6f);
+
+    // Short box
+//    createCube(FACE_MASK_ALL, vector3(0.725f, 0.71f, 0.68f), transform, false, TRIANGLE_MASK_GEOMETRY, PlywoodMaterial);
+
+    
+    
 }
 
 - (void)createBuffers
@@ -222,27 +261,259 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     
     _uniformBuffer = [_device newBufferWithLength:uniformBufferSize options:options];
 
-    // Allocate buffers for vertex positions, colors, and normals. Note that each vertex position is a
-    // float3, which is a 16 byte aligned type.
-    _vertexPositionBuffer = [_device newBufferWithLength:vertices.size() * sizeof(float3) options:options];
-    _vertexColorBuffer = [_device newBufferWithLength:colors.size() * sizeof(float3) options:options];
-    _vertexNormalBuffer = [_device newBufferWithLength:normals.size() * sizeof(float3) options:options];
-    _triangleMaskBuffer = [_device newBufferWithLength:masks.size() * sizeof(uint32_t) options:options];
+#ifdef RENDER_MESH
+
+
+    size_t meshesVertexSize = 0;
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        meshesVertexSize +=meshgroup.meshes[i].vertex_count;
+    }
+    {
+        size_t size = vertices.size() + meshesVertexSize;
+        _vertexPositionBuffer = [_device newBufferWithLength:size * sizeof(float3) options:options];
+    }
+//    {
+        
+//        size_t size = colors.size() + meshVertexSize;
+//        _vertexColorBuffer = [_device newBufferWithLength:size * sizeof(float3) options:options];
+//    }
+    {
+        size_t size = normals.size() + meshesVertexSize;
+        _vertexNormalBuffer = [_device newBufferWithLength:size * sizeof(float3) options:options];
+    }
+    {
+        size_t size = uvs.size() + meshesVertexSize;
+        _vertexCoordsBuffer = [_device newBufferWithLength:size * sizeof(float2) options:options];
+    }
+    size_t meshIndexSize = 0;
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        meshIndexSize +=meshgroup.meshes[i].index_count;
+    }
+    {
+        size_t size = indices.size() + meshIndexSize;
+        _indexBuffer = [_device newBufferWithLength:size * sizeof(uint32_t) options:options];
+    }
+    // resize mask and material for mesh triangles
+    size_t meshTriangleSize = meshIndexSize/3;
+    {
+        size_t size = masks.size() + meshTriangleSize;
+        _triangleMaskBuffer = [_device newBufferWithLength:size * sizeof(uint32_t) options:options];
+    }
+    {
+        size_t size = materials.size() + meshTriangleSize;
+        _materialIdsBuffer = [_device newBufferWithLength:size* sizeof(uint32_t) options:options];
+    }
+
+    // transform vertices and normals to their world position
     
+    
+    _rootSceneNode.init();
+    _rootSceneNode.addChild(meshgroup.nodes[0]);
+    
+    _rootSceneNode.scale = vec3(_scaleValue, _scaleValue, _scaleValue);
+    _rootSceneNode.position = _rootPosition;
+    _rootSceneNode.rotation = quat_from_axis_deg(45, 0, 1, 0);
+
+    _rootSceneNode.updateHierarchy();
+    
+    auto inplaceTransformVector3 = [](mat4 A, float* src, size_t count) {
+        for (int i=0;i<count;++i) {
+            vec4 x(src[0],src[1],src[2],1.f);
+//            print(x);
+            vec4 b = A*x;
+//            print(b);
+            src[0]=b.x;
+            src[1]=b.y;
+            src[2]=b.z;
+            src += 3;
+        }
+    };
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        inplaceTransformVector3((*meshgroup.meshes[i].node).worldMatrix, meshgroup.meshes[i].vp, meshgroup.meshes[i].vertex_count);
+    }
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        inplaceTransformVector3(transpose((*meshgroup.meshes[i].node).worldInverseMatrix), meshgroup.meshes[i].vn, meshgroup.meshes[i].vertex_count);
+    }
+
     // Copy vertex data into buffers
-    memcpy(_vertexPositionBuffer.contents, &vertices[0], _vertexPositionBuffer.length);
-    memcpy(_vertexColorBuffer.contents, &colors[0], _vertexColorBuffer.length);
-    memcpy(_vertexNormalBuffer.contents, &normals[0], _vertexNormalBuffer.length);
-    memcpy(_triangleMaskBuffer.contents, &masks[0], _triangleMaskBuffer.length);
+    auto copyToFloat3Buffer = [](float3* dest, float* src, size_t count) {
+        for (int i=0;i<count;++i) {
+            *dest = vector3(src[0],src[1],src[2]);
+            ++dest;
+            src += 3;
+        }
+    };
+
+    // Copy vertex data into buffers
+
+    {
+        float3* bufferOffset = (float3*)_vertexPositionBuffer.contents;
+        memcpy(bufferOffset, &vertices[0], vertices.size() * sizeof(float3));
+        bufferOffset+=vertices.size();
+        for (int i=0;i<meshgroup.meshes.size();++i) {
+            copyToFloat3Buffer(bufferOffset, meshgroup.meshes[i].vp, meshgroup.meshes[i].vertex_count);
+            bufferOffset+=meshgroup.meshes[i].vertex_count;
+        }
+    }
     
+//    {
+//        float3* bufferOffset = (float3*)_vertexColorBuffer.contents;
+//        memcpy(bufferOffset, &colors[0], colors.size() * sizeof(float3));
+//        bufferOffset+=colors.size();
+//        for (int i=0;i<meshgroup.meshes.size();++i) {
+//            copyToFloat3Buffer(bufferOffset, meshgroup.meshes[i].vc, meshgroup.meshes[i].vertex_count);
+//            bufferOffset+=meshVertexSize;
+//        }
+//    }
+    
+
+    {
+        float3* bufferOffset = (float3*)_vertexNormalBuffer.contents;
+        memcpy(bufferOffset, &normals[0], normals.size() * sizeof(float3));
+        bufferOffset+=normals.size();
+        for (int i=0;i<meshgroup.meshes.size();++i) {
+            copyToFloat3Buffer(bufferOffset, meshgroup.meshes[i].vn, meshgroup.meshes[i].vertex_count);
+            bufferOffset+=meshgroup.meshes[i].vertex_count;
+        }
+    }
+    auto copyToFloat2Buffer = [](float2* dest, float* src, size_t count) {
+        for (int i=0;i<count;++i) {
+            *dest = vector2(src[0],src[1]);
+            ++dest;
+            src += 2;
+        }
+    };
+    {
+        float2* bufferOffset = (float2*)_vertexCoordsBuffer.contents;
+        memcpy(bufferOffset, &uvs[0], uvs.size() * sizeof(float2));
+        bufferOffset+=uvs.size();
+        for (int i=0;i<meshgroup.meshes.size();++i) {
+            copyToFloat2Buffer(bufferOffset, meshgroup.meshes[i].uvs[0], meshgroup.meshes[i].vertex_count);
+            bufferOffset+=meshgroup.meshes[i].vertex_count;
+        }
+    }
+    auto copyToUint32Buffer = [](uint32_t* dest, unsigned* src, size_t indexOffset, size_t count) {
+        for (int i=0;i<count;++i) {
+            *dest = uint32_t(src[0]+indexOffset);
+            ++dest;
+            ++src;
+        }
+    };
+    {
+        uint32_t* bufferOffset = (uint32_t*)_indexBuffer.contents;
+        memcpy(bufferOffset, &indices[0], indices.size() * sizeof(uint32_t));
+        bufferOffset+=indices.size();
+        size_t indexOffset = vertices.size();
+        for (int i=0;i<meshgroup.meshes.size();++i) {
+            copyToUint32Buffer(bufferOffset, meshgroup.meshes[i].faces_indices, indexOffset, meshgroup.meshes[i].index_count);
+            bufferOffset+=meshgroup.meshes[i].index_count;
+            indexOffset+=meshgroup.meshes[i].vertex_count;
+        }
+    }
+    {
+        uint32_t* bufferOffset = (uint32_t*)_triangleMaskBuffer.contents;
+        memcpy(bufferOffset, &masks[0], masks.size() * sizeof(uint32_t));
+        bufferOffset+=masks.size();
+        for (int i=0;i<meshgroup.meshes.size();++i) {
+            size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
+            for (int i=0; i < meshTriangleSize; ++i) {
+                *bufferOffset = TRIANGLE_MASK_GEOMETRY;
+                ++bufferOffset;
+            }
+        }
+
+    }
+    {
+        uint32_t* bufferOffset = (uint32_t*)_materialIdsBuffer.contents;
+        memcpy(bufferOffset, &materials[0], materials.size() * sizeof(uint32_t));
+        bufferOffset+=materials.size();
+        for (int i=0;i<meshgroup.meshes.size();++i) {
+            size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
+            for (int j=0; j < meshTriangleSize; ++j) {
+                *bufferOffset = MaterialSize+i;
+                ++bufferOffset;
+            }
+        }
+    }
+    // debug
+//    {
+//        printf("vertex\n");
+//        float3* kk = (float3*)_vertexPositionBuffer.contents;
+//        for (int i=0;i<_vertexPositionBuffer.length/sizeof(float3); i++) {
+//            printf("%d:[%0.3f,%0.3f,%0.3f]\n", i, kk[i].x, kk[i].y, kk[i].z );
+//        }
+//    }
+//    {
+//        printf("normals\n");
+//        float3* kk = (float3*)_vertexNormalBuffer.contents;
+//        for (int i=0;i<_vertexNormalBuffer.length/sizeof(float3); i++) {
+//            printf("%d:[%0.3f,%0.3f,%0.3f]\n", i, kk[i].x, kk[i].y, kk[i].z );
+//        }
+//    }
+//    {
+//        printf("uvs\n");
+//        float2* kk = (float2*)_vertexCoordsBuffer.contents;
+//        for (int i=0;i<_vertexCoordsBuffer.length/sizeof(float2); i++) {
+//            printf("%d:[%0.3f,%0.3f]\n", i, kk[i].x, kk[i].y );
+//        }
+//    }
+//    {
+//        printf("idx\n");
+//        uint32_t* kk = (uint32_t*)_indexBuffer.contents;
+//        for (int i=0;i<_indexBuffer.length/(3*sizeof(uint32_t)); i++) {
+//            printf("%d:[%d %d %d]\n", i, kk[i*3],kk[i*3+1],kk[i*3+2]);
+//        }
+//    }
+//    {
+//        printf("\nmaterials\n");
+//        uint32_t* kk = (uint32_t*)_materialIdsBuffer.contents;
+//        for (int i=0;i<_materialIdsBuffer.length/sizeof(uint32_t); i++) {
+//            printf("%d:%d ", i, kk[i]);
+//        }
+//    }
+//    {
+//        printf("\nmasks\n");
+//        uint32_t* kk = (uint32_t*)_triangleMaskBuffer.contents;
+//        for (int i=0;i<_triangleMaskBuffer.length/sizeof(uint32_t); i++) {
+//            printf("%d:%d ", i, kk[i]);
+//        }
+//    }
+
+#endif
     // When using managed buffers, we need to indicate that we modified the buffer so that the GPU
     // copy can be updated
 #if !TARGET_OS_IPHONE
     [_vertexPositionBuffer didModifyRange:NSMakeRange(0, _vertexPositionBuffer.length)];
-    [_vertexColorBuffer didModifyRange:NSMakeRange(0, _vertexColorBuffer.length)];
+    //[_vertexColorBuffer didModifyRange:NSMakeRange(0, _vertexColorBuffer.length)];
     [_vertexNormalBuffer didModifyRange:NSMakeRange(0, _vertexNormalBuffer.length)];
+    [_vertexCoordsBuffer didModifyRange:NSMakeRange(0, _vertexCoordsBuffer.length)];
     [_triangleMaskBuffer didModifyRange:NSMakeRange(0, _triangleMaskBuffer.length)];
+    [_materialIdsBuffer didModifyRange:NSMakeRange(0, _materialIdsBuffer.length)];
+    [_indexBuffer didModifyRange:NSMakeRange(0, _indexBuffer.length)];
 #endif
+    
+    
+    NSURL *imageFileLocation = nullptr;
+//    ImageMaterial,
+//    ConcreteMaterial,
+//    RedConcreteMaterial,
+//    GreenConcreteMaterial,
+//    PlywoodMaterial,
+    NSArray* textureFileNames = [[NSArray alloc] initWithObjects:@"image",@"concrete",@"redConcrete",@"greenConcrete", @"osb", nil];
+    assert(textureFileNames.count >= MaterialSize);
+    
+    NSMutableArray* textures = [NSMutableArray array];
+    for (NSUInteger i = 0; i < MaterialSize; ++i) {
+        imageFileLocation= [[NSBundle mainBundle] URLForResource:textureFileNames[i] withExtension:@"tga"];
+        [textures addObject:[self createAndLoadTextureUsingAAPLImage: imageFileLocation]];
+    }
+    
+    assert (MaterialSize + meshgroup.meshes.size() < MaxMaterialSize);
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        [textures addObject:[self createAndLoadTextureUsingTexture:meshgroup.meshes[i].diffuse]];
+    }
+    _colorTexture = [textures copy];
+    _frameIndex = 0;
 }
 
 - (void)createIntersector
@@ -258,10 +529,73 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _accelerationStructure = [[MPSTriangleAccelerationStructure alloc] initWithDevice:_device];
     
     _accelerationStructure.vertexBuffer = _vertexPositionBuffer;
+
+    _accelerationStructure.indexBuffer =_indexBuffer;
     _accelerationStructure.maskBuffer = _triangleMaskBuffer;
-    _accelerationStructure.triangleCount = vertices.size() / 3;
+#ifdef RENDER_MESH
+    size_t meshIndexSize = 0;
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        meshIndexSize +=meshgroup.meshes[i].index_count;
+    }
+
+    size_t triangleSize = indices.size()/3 + meshIndexSize/3;
+    _accelerationStructure.triangleCount = triangleSize;
+#else
+    _accelerationStructure.triangleCount = indices.size() / 3;
+    
+#endif
     
     [_accelerationStructure rebuild];
+}
+
+
+- (id<MTLTexture>)createAndLoadTextureUsingAAPLImage: (NSURL *) url {
+    
+    AAPLImage * image = [[AAPLImage alloc] initWithTGAFileAtLocation:url];
+    
+    NSAssert(image, @"Failed to create the image from %@", url.absoluteString);
+
+    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+    
+    // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+    // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    
+    // Set the pixel dimensions of the texture
+    textureDescriptor.width = image.width;
+    textureDescriptor.height = image.height;
+    
+    // Create the texture from the device by using the descriptor
+    id<MTLTexture> texture = [_device newTextureWithDescriptor:textureDescriptor];
+    
+    // Calculate the number of bytes per row in the image.
+    NSUInteger bytesPerRow = 4 * image.width;
+    
+    MTLRegion region = {
+        { 0, 0, 0 },                   // MTLOrigin
+        {image.width, image.height, 1} // MTLSize
+    };
+    
+    // Copy the bytes from the data object into the texture
+    [texture replaceRegion:region mipmapLevel:0 withBytes:image.data.bytes bytesPerRow:bytesPerRow];
+    return texture;
+}
+
+- (id<MTLTexture>)createAndLoadTextureUsingTexture: (Meshgroup::Texture&) texture {
+    assert (texture.n == 4);
+    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+//    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
+//    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Sint;
+//    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Uint;
+//    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Snorm;
+    textureDescriptor.width = texture.x;
+    textureDescriptor.height = texture.y;
+    
+    id<MTLTexture> ret = [_device newTextureWithDescriptor:textureDescriptor];
+    MTLRegion region = { { 0, 0, 0 }, {(NSUInteger)texture.x, (NSUInteger)texture.y, 1} };
+    [ret replaceRegion:region mipmapLevel:0 withBytes:texture.image_data bytesPerRow:texture.n * texture.x];
+    return ret;
 }
 
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
@@ -321,27 +655,47 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
                       bytesPerRow:sizeof(uint32_t) * size.width];
     
     free(randomValues);
-    
-    _frameIndex = 0;
+
 }
 
 - (void)updateUniforms {
+    auto transformVector = [](const matrix_float4x4& A, const float3& vector)
+    {
+        float3 v = vector;
+        float4 v4 = vector4(v.x, v.y, v.z, 1.0f);
+        float4 vt = A * v4;
+        return vector3(vt.x,vt.y,vt.z);
+    };
+
     // Update this frame's uniforms
     _uniformBufferOffset = alignedUniformsSize * _uniformBufferIndex;
 
     Uniforms *uniforms = (Uniforms *)((char *)_uniformBuffer.contents + _uniformBufferOffset);
 
-    uniforms->camera.position = vector3(0.0f, 1.0f, 3.38f);
+    uniforms->camera.position = vector3(_posX, _posY, _posZ);
+
+//    uniforms->camera.forward = vector3(0.0f, 0.0f, -1.0f);
+//    uniforms->camera.right = vector3(1.0f, 0.0f, 0.0f);
+//    uniforms->camera.up = vector3(0.0f, 1.0f, 0.0f);
+
+    matrix_float4x4 cameraRotation = matrix4x4_rotation(_rotY, vector3(0.0f, 1.0f, 0.0f))*matrix4x4_rotation(_rotX, vector3(1.0f, 0.0f, 0.0f));
     
-    uniforms->camera.forward = vector3(0.0f, 0.0f, -1.0f);
-    uniforms->camera.right = vector3(1.0f, 0.0f, 0.0f);
-    uniforms->camera.up = vector3(0.0f, 1.0f, 0.0f);
+    uniforms->camera.forward = transformVector(cameraRotation, vector3(0.0f, 0.0f,-1.0f));
+    uniforms->camera.right = transformVector(cameraRotation, vector3(1.0f, 0.0f,0.0f));
+    uniforms->camera.up = transformVector(cameraRotation, vector3(0.0f, 1.0f,0.0f));
     
-    uniforms->light.position = vector3(0.0f, 1.98f, 0.0f);
+    uniforms->light.position = vector3(0.0f, _lightY, 0.0f);
     uniforms->light.forward = vector3(0.0f, -1.0f, 0.0f);
-    uniforms->light.right = vector3(0.25f, 0.0f, 0.0f);
-    uniforms->light.up = vector3(0.0f, 0.0f, 0.25f);
+    uniforms->light.right = vector3(1.f, 0.0f, 0.0f);
+    uniforms->light.up = vector3(0.0f, 0.0f, 1.f);
+
+//    uniforms->light.right = vector3(0.25f, 0.0f, 0.0f);
+//    uniforms->light.up = vector3(0.0f, 0.0f, 0.25f);
     uniforms->light.color = vector3(4.0f, 4.0f, 4.0f);
+    // frame index is used in the accumulation phase to decide what to mix from previous
+    // setting it to 0 will give all weight to new color so that it effectively "clears" the accumulation buffer
+    _frameIndex = _makeFrameDirty? 0:_frameIndex;
+    _makeFrameDirty = false;
     
     float fieldOfView = 45.0f * (M_PI / 180.0f);
     float aspectRatio = (float)_size.width / (float)_size.height;
@@ -432,17 +786,26 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         // We launch another pipeline to consume the intersection results and shade the scene
         computeEncoder = [commandBuffer computeCommandEncoder];
         
-        [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:0];
-        [computeEncoder setBuffer:_rayBuffer          offset:0                    atIndex:1];
-        [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:2];
-        [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:3];
-        [computeEncoder setBuffer:_vertexColorBuffer  offset:0                    atIndex:4];
-        [computeEncoder setBuffer:_vertexNormalBuffer offset:0                    atIndex:5];
-        [computeEncoder setBuffer:_triangleMaskBuffer offset:0                    atIndex:6];
-        [computeEncoder setBytes:&bounce              length:sizeof(bounce)       atIndex:7];
+        short int index = 0;
+        [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:index++];
+        [computeEncoder setBuffer:_rayBuffer          offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:index++];
+//        [computeEncoder setBuffer:_vertexColorBuffer  offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_vertexNormalBuffer offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_vertexCoordsBuffer offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_triangleMaskBuffer offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_materialIdsBuffer  offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_indexBuffer        offset:0                    atIndex:index++];
+        [computeEncoder setBytes:&bounce              length:sizeof(bounce)       atIndex:index++];
         
-        [computeEncoder setTexture:_randomTexture    atIndex:0];
-        [computeEncoder setTexture:_renderTargets[0] atIndex:1];
+        [computeEncoder setTexture:_randomTexture  atIndex:AAPLArgumentBufferIDRandom];
+//        for (NSUInteger i=0;i<[_colorTexture count]; ++i) {
+        for (NSUInteger i=0;i<[_colorTexture count]; ++i) {
+            [computeEncoder setTexture:_colorTexture[i] atIndex:AAPLArgumentBufferIDColor+i];
+        }
+        [computeEncoder setTexture:_renderTargets[0] atIndex:AAPLArgumentBufferIDRenderTarget];
+
         
         [computeEncoder setComputePipelineState:_shadePipeline];
         
@@ -533,6 +896,16 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     // Finally, commit the command buffer so that the GPU can start executing
     [commandBuffer commit];
+}
+-(void) moveCameraWithSpeedX:(float)x Y:(float)y Z:(float)z RX:(float)rx RY:(float)ry;
+{
+    _posX += x;
+    _posY += y;
+    _posZ += z;
+    _rotX += rx;
+    _rotY += ry;
+    
+    _makeFrameDirty = true;
 }
 
 @end

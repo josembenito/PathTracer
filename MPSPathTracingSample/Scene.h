@@ -10,12 +10,16 @@ Header for scene creation functions
 
 #include <vector>
 #include <simd/simd.h>
+#import <mesh.h>
 
 extern std::vector<vector_float3> vertices;
 extern std::vector<vector_float3> normals;
 extern std::vector<vector_float3> colors;
+extern std::vector<vector_float2> uvs;
+extern std::vector<uint32_t> indices;
 extern std::vector<uint32_t> masks;
-
+extern std::vector<uint32_t> materials;
+extern Meshgroup meshgroup;
 #define FACE_MASK_NONE       0
 #define FACE_MASK_NEGATIVE_X (1 << 0)
 #define FACE_MASK_POSITIVE_X (1 << 1)
@@ -29,6 +33,9 @@ void createCube(unsigned int faceMask,
                 vector_float3 color,
                 matrix_float4x4 transform,
                 bool inwardNormals,
-                unsigned int triangleMask);
+                unsigned int triangleMask,
+                unsigned int materialIndex);
+
+void loadMesh(const char* name, const char* ext = "gltf");
 
 #endif /* Scene_h */

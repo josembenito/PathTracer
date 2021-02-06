@@ -13,5 +13,7 @@ Header for platform independent renderer class
 
 -(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
 
+-(void) moveCameraWithSpeedX:(float)x Y:(float)y Z:(float)z RX:(float)rx RY:(float)ry;
+
 @end
 

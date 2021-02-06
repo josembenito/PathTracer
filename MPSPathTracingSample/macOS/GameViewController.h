@@ -12,5 +12,6 @@ Header for our macOS view controller
 
 // Our macOS view controller.
 @interface GameViewController : NSViewController
-
+-(bool) globalKeyDown: (NSEvent *) event;
+-(void) globalMouseEntered: (NSEvent *) event;
 @end

@@ -160,6 +160,24 @@ inline T interpolateVertexAttribute(device T *attributes, Intersection intersect
     return uvw.x * T0 + uvw.y * T1 + uvw.z * T2;
 }
 
+template<typename T>
+inline T interpolateVertexAttributeIndexed(device T *attributes, Intersection intersection, device uint* indices) {
+    // Barycentric coordinates sum to one
+    float3 uvw;
+    uvw.xy = intersection.coordinates;
+    uvw.z = 1.0f - uvw.x - uvw.y;
+    
+    unsigned int triangleIndex = intersection.primitiveIndex;
+    
+    // Lookup value for each vertex
+    T T0 = attributes[indices[triangleIndex * 3 + 0]];
+    T T1 = attributes[indices[triangleIndex * 3 + 1]];
+    T T2 = attributes[indices[triangleIndex * 3 + 2]];
+    
+    // Compute sum of vertex attributes weighted by barycentric coordinates
+    return uvw.x * T0 + uvw.y * T1 + uvw.z * T2;
+}
+
 // Uses the inversion method to map two uniformly random numbers to a three dimensional
 // unit hemisphere where the probability of a given sample is proportional to the cosine
 // of the angle between the sample direction and the "up" direction (0, 1, 0)
@@ -208,11 +226,10 @@ inline void sampleAreaLight(constant AreaLight & light,
     lightColor = light.color;
     
     // Light falls off with the inverse square of the distance to the intersection point
-    lightColor *= (inverseLightDistance * inverseLightDistance);
+    //lightColor *= (inverseLightDistance * inverseLightDistance);
     
-    // Light also falls off with the cosine of angle between the intersection point and
-    // the light source
-    lightColor *= saturate(dot(-lightDirection, light.forward));
+    // uncomment if light area should be one sided (only forward)
+//    lightColor *= saturate(dot(-lightDirection, light.forward));
 }
 
 // Aligns a direction on the unit hemisphere such that the hemisphere's "up" direction
@@ -240,12 +257,21 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                         device Ray *rays,
                         device Ray *shadowRays,
                         device Intersection *intersections,
-                        device float3 *vertexColors,
+//                        device float3 *vertexColors,
                         device float3 *vertexNormals,
+                        device float2 *vertexCoords,
                         device uint *triangleMasks,
+                        device uint *materials,
+                        device uint *indices,
                         constant unsigned int & bounce,
                         texture2d<unsigned int> randomTex,
+//                        array<texture2d<half>, MaterialSize> colorTexture,
+                        array<texture2d<half>, MaxMaterialSize> colorTexture,
                         texture2d<float, access::write> dstTex)
+// TODO:
+// create array of color textures and init in program like in Argument Buffer Array with Heaps example
+// use triangleMask similar but with material index per primitive (triangle). Access color textures with material index in turn
+
 {
     if (tid.x < uniforms.width && tid.y < uniforms.height) {
         unsigned int rayIdx = tid.y * uniforms.width + tid.x;
@@ -268,7 +294,8 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                 float3 intersectionPoint = ray.origin + ray.direction * intersection.distance;
 
                 // Interpolate the vertex normal at the intersection point
-                float3 surfaceNormal = interpolateVertexAttribute(vertexNormals, intersection);
+                // float3 surfaceNormal = interpolateVertexAttribute(vertexNormals, intersection);
+                float3 surfaceNormal = interpolateVertexAttributeIndexed(vertexNormals, intersection, indices);
                 surfaceNormal = normalize(surfaceNormal);
 
                 unsigned int offset = randomTex.read(tid).x;
@@ -289,9 +316,21 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                 // Scale the light color by the cosine of the angle between the light direction and
                 // surface normal
                 lightColor *= saturate(dot(surfaceNormal, lightDirection));
+                //float2 uvs = interpolateVertexAttribute(vertexCoords,intersection);
+                float2 uvs = interpolateVertexAttributeIndexed(vertexCoords,intersection, indices);
 
                 // Interpolate the vertex color at the intersection point
-                color *= interpolateVertexAttribute(vertexColors, intersection);
+                //color *= interpolateVertexAttribute(vertexColors, intersection);
+                
+                // todo: get texture color here
+                // Sample the texture to obtain a color
+                constexpr sampler textureSampler (mag_filter::linear, min_filter::linear);
+
+//                const half4 colorSample = half4(intersection.coordinates.x, intersection.coordinates.y,0,0);
+//                color *= float3(colorSample.xyz);
+                uint materialId = materials[intersection.primitiveIndex];
+                const half4 colorSample = colorTexture[materialId].sample(textureSampler, uvs);
+                color *= float3(colorSample.xyz);
                 
                 // Compute the shadow ray. The shadow ray will check if the sample position on the
                 // light source is actually visible from the intersection point we are shading.
@@ -376,8 +415,12 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
         // If the shadow ray wasn't disabled (max distance >= 0) and it didn't hit anything
         // on the way to the light source, add the color passed along with the shadow ray
         // to the output image.
+        float3 ambient(0.1f,0.1f,0.2f);
+        //color += shadowRay.color;
         if (shadowRay.maxDistance >= 0.0f && intersectionDistance < 0.0f)
             color += shadowRay.color;
+        else
+            color += shadowRay.color*ambient;
         
         // Write result to render target
         dstTex.write(float4(color, 1.0f), tid);
@@ -396,14 +439,11 @@ kernel void accumulateKernel(uint2 tid [[thread_position_in_grid]],
         float3 color = renderTex.read(tid).xyz;
 
         // Compute the average of all frames including the current frame
-        if (uniforms.frameIndex > 0) {
+
+            float t = float(uniforms.frameIndex)/(uniforms.frameIndex + 1);
             float3 prevColor = prevTex.read(tid).xyz;
-            prevColor *= uniforms.frameIndex;
-            
-            color += prevColor;
-            color /= (uniforms.frameIndex + 1);
-        }
-        
+            color = mix (color,prevColor, t);
+    
         accumTex.write(float4(color, 1.0f), tid);
     }
 }

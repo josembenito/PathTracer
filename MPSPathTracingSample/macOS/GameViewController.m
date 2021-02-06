@@ -7,19 +7,25 @@ Implementation for our macOS view controller
 
 #import "GameViewController.h"
 #import "Renderer.h"
+#import "GameView.h"
 
 @implementation GameViewController
 {
-    MTKView *_view;
-
+    //MTKView *_view;
+    GameView * _view;
     Renderer *_renderer;
+    NSPoint prevMouseLocation;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 
-    _view = (MTKView *)self.view;
+    
+    //_view = (MTKView *)self.view;
+    _view = (GameView *)self.view;
+    
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(globalKeyDown:) name:@"viewKeyEvent" object:nil];
     
     // Set color space of view to SRGB  
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
@@ -39,7 +45,8 @@ Implementation for our macOS view controller
     }
 
     _view.device = device;
-
+    [_view becomeFirstResponder];
+    
     if(!_view.device)
     {
         NSLog(@"Metal is not supported on this device");
@@ -52,6 +59,75 @@ Implementation for our macOS view controller
     [_renderer mtkView:_view drawableSizeWillChange:_view.bounds.size];
 
     _view.delegate = _renderer;
+    _view.viewController = self;
+    
+    prevMouseLocation = [NSEvent mouseLocation];
+}
+-(void) globalMouseEntered: (NSEvent *) event
+{
+    prevMouseLocation = [NSEvent mouseLocation];
+}
+
+-(bool) globalKeyDown: (NSEvent *) event
+{
+    bool ret = false;
+    float x = 0, y = 0, z = 0, rx = 0, ry = 0;
+    if ([event type] == NSEventTypeKeyUp ) {
+        if( [event keyCode] == 123) {
+            x=-0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 124) {
+            x=0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 125) {
+            z=0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 126) {
+            z=-0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 116) {
+            y=0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 121) {
+            y=-0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 0) {
+            ry=0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 2) {
+            ry=-0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 13) {
+            rx=0.1;
+            ret = true;
+        }
+        if( [event keyCode] == 1) {
+            rx=-0.1;
+            ret = true;
+        }
+    }
+    if ([event type] == NSEventTypeMouseMoved) {
+        NSPoint mouseLocation = [NSEvent mouseLocation];
+        NSPoint mouseDelta;
+        mouseDelta.x = mouseLocation.x-prevMouseLocation.x;
+        mouseDelta.y = mouseLocation.y-prevMouseLocation.y;
+        prevMouseLocation = mouseLocation;
+        ry=-mouseDelta.x*0.01f;
+        rx=mouseDelta.y*0.01f;
+        ret = true;
+    }
+    if (ret) {
+        [_renderer moveCameraWithSpeedX:x Y:y Z:z RX:rx RY:ry];
+    }
+    return ret;
 }
 
 @end

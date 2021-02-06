@@ -27,7 +27,92 @@
 		51F7001A209BCA180017E288 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 51F70006209BC3F00017E288 /* Main.storyboard */; };
 		51F7FFBA209BC1C40017E288 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E97FA52017014200D09D13 /* MetalPerformanceShaders.framework */; };
 		51F7FFCD209BC1C60017E288 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E97FA72017014A00D09D13 /* MetalPerformanceShaders.framework */; };
+		F45A5B832524DF47004463C5 /* AAPLImage.m in Sources */ = {isa = PBXBuildFile; fileRef = F45A5B812524DF47004463C5 /* AAPLImage.m */; };
+		F45A5B872524E033004463C5 /* image.tga in Resources */ = {isa = PBXBuildFile; fileRef = F45A5B862524E033004463C5 /* image.tga */; };
+		F45A5B882524E033004463C5 /* image.tga in Resources */ = {isa = PBXBuildFile; fileRef = F45A5B862524E033004463C5 /* image.tga */; };
+		F45A5B8B2524E05B004463C5 /* AAPLImage.m in Sources */ = {isa = PBXBuildFile; fileRef = F45A5B812524DF47004463C5 /* AAPLImage.m */; };
+		F489C5B625502ED900F360B6 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F489C5B525502ED800F360B6 /* CoreFoundation.framework */; };
+		F489C5D72550332E00F360B6 /* foliage_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BC2550332E00F360B6 /* foliage_emissive.png */; };
+		F489C5D82550332E00F360B6 /* foliage_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BC2550332E00F360B6 /* foliage_emissive.png */; };
+		F489C5D92550332E00F360B6 /* sand_tile_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BD2550332E00F360B6 /* sand_tile_baseColor.png */; };
+		F489C5DA2550332E00F360B6 /* sand_tile_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BD2550332E00F360B6 /* sand_tile_baseColor.png */; };
+		F489C5DB2550332E00F360B6 /* emissive_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BE2550332E00F360B6 /* emissive_baseColor.png */; };
+		F489C5DC2550332E00F360B6 /* emissive_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BE2550332E00F360B6 /* emissive_baseColor.png */; };
+		F489C5DD2550332E00F360B6 /* building_mats_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BF2550332E00F360B6 /* building_mats_baseColor.png */; };
+		F489C5DE2550332E00F360B6 /* building_mats_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5BF2550332E00F360B6 /* building_mats_baseColor.png */; };
+		F489C5DF2550332E00F360B6 /* foliage_02_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C02550332E00F360B6 /* foliage_02_emissive.png */; };
+		F489C5E02550332E00F360B6 /* foliage_02_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C02550332E00F360B6 /* foliage_02_emissive.png */; };
+		F489C5E12550332E00F360B6 /* material_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C12550332E00F360B6 /* material_baseColor.png */; };
+		F489C5E22550332E00F360B6 /* material_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C12550332E00F360B6 /* material_baseColor.png */; };
+		F489C5E32550332E00F360B6 /* bits_bobs_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C22550332E00F360B6 /* bits_bobs_baseColor.png */; };
+		F489C5E42550332E00F360B6 /* bits_bobs_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C22550332E00F360B6 /* bits_bobs_baseColor.png */; };
+		F489C5E52550332E00F360B6 /* wood_trims_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C32550332E00F360B6 /* wood_trims_baseColor.png */; };
+		F489C5E62550332E00F360B6 /* wood_trims_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C32550332E00F360B6 /* wood_trims_baseColor.png */; };
+		F489C5E72550332E00F360B6 /* rocks_unique_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C42550332E00F360B6 /* rocks_unique_baseColor.png */; };
+		F489C5E82550332E00F360B6 /* rocks_unique_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C42550332E00F360B6 /* rocks_unique_baseColor.png */; };
+		F489C5E92550332E00F360B6 /* wood_painted_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C52550332E00F360B6 /* wood_painted_baseColor.png */; };
+		F489C5EA2550332E00F360B6 /* wood_painted_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C52550332E00F360B6 /* wood_painted_baseColor.png */; };
+		F489C5EB2550332E00F360B6 /* material_2_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C62550332E00F360B6 /* material_2_baseColor.png */; };
+		F489C5EC2550332E00F360B6 /* material_2_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C62550332E00F360B6 /* material_2_baseColor.png */; };
+		F489C5ED2550332E00F360B6 /* sand_caustics_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C72550332E00F360B6 /* sand_caustics_baseColor.png */; };
+		F489C5EE2550332E00F360B6 /* sand_caustics_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C72550332E00F360B6 /* sand_caustics_baseColor.png */; };
+		F489C5EF2550332E00F360B6 /* rock_tile_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C82550332E00F360B6 /* rock_tile_baseColor.png */; };
+		F489C5F02550332E00F360B6 /* rock_tile_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C82550332E00F360B6 /* rock_tile_baseColor.png */; };
+		F489C5F12550332E00F360B6 /* foliage_02_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C92550332E00F360B6 /* foliage_02_baseColor.png */; };
+		F489C5F22550332E00F360B6 /* foliage_02_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5C92550332E00F360B6 /* foliage_02_baseColor.png */; };
+		F489C5F32550332E00F360B6 /* sails_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CA2550332E00F360B6 /* sails_baseColor.png */; };
+		F489C5F42550332E00F360B6 /* sails_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CA2550332E00F360B6 /* sails_baseColor.png */; };
+		F489C5F52550332E00F360B6 /* foliage_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CB2550332E00F360B6 /* foliage_baseColor.png */; };
+		F489C5F62550332E00F360B6 /* foliage_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CB2550332E00F360B6 /* foliage_baseColor.png */; };
+		F489C5F72550332E00F360B6 /* sails_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CC2550332E00F360B6 /* sails_emissive.png */; };
+		F489C5F82550332E00F360B6 /* sails_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CC2550332E00F360B6 /* sails_emissive.png */; };
+		F489C5F92550332E00F360B6 /* emissive_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CD2550332E00F360B6 /* emissive_emissive.png */; };
+		F489C5FA2550332E00F360B6 /* emissive_emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CD2550332E00F360B6 /* emissive_emissive.png */; };
+		F489C5FB2550332E00F360B6 /* wood_planks_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CE2550332E00F360B6 /* wood_planks_baseColor.png */; };
+		F489C5FC2550332E00F360B6 /* wood_planks_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CE2550332E00F360B6 /* wood_planks_baseColor.png */; };
+		F489C5FD2550332E00F360B6 /* water_light_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CF2550332E00F360B6 /* water_light_baseColor.png */; };
+		F489C5FE2550332E00F360B6 /* water_light_baseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5CF2550332E00F360B6 /* water_light_baseColor.png */; };
+		F489C5FF2550332E00F360B6 /* scene.gltf in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D02550332E00F360B6 /* scene.gltf */; };
+		F489C6002550332E00F360B6 /* scene.gltf in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D02550332E00F360B6 /* scene.gltf */; };
+		F489C6012550332E00F360B6 /* scene.bin in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D12550332E00F360B6 /* scene.bin */; };
+		F489C6022550332E00F360B6 /* scene.bin in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D12550332E00F360B6 /* scene.bin */; };
+		F489C6032550332E00F360B6 /* Cube_BaseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D32550332E00F360B6 /* Cube_BaseColor.png */; };
+		F489C6042550332E00F360B6 /* Cube_BaseColor.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D32550332E00F360B6 /* Cube_BaseColor.png */; };
+		F489C6052550332E00F360B6 /* Cube.bin in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D42550332E00F360B6 /* Cube.bin */; };
+		F489C6062550332E00F360B6 /* Cube.bin in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D42550332E00F360B6 /* Cube.bin */; };
+		F489C6072550332E00F360B6 /* Cube_MetallicRoughness.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D52550332E00F360B6 /* Cube_MetallicRoughness.png */; };
+		F489C6082550332E00F360B6 /* Cube_MetallicRoughness.png in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D52550332E00F360B6 /* Cube_MetallicRoughness.png */; };
+		F489C6092550332E00F360B6 /* Cube.gltf in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D62550332E00F360B6 /* Cube.gltf */; };
+		F489C60A2550332E00F360B6 /* Cube.gltf in Resources */ = {isa = PBXBuildFile; fileRef = F489C5D62550332E00F360B6 /* Cube.gltf */; };
+		F4921F13254C9EDB003E259D /* libassimp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F4921F12254C9EDB003E259D /* libassimp.dylib */; };
+		F4921F31254CA04F003E259D /* libMeshImporter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F4921F29254CA002003E259D /* libMeshImporter.a */; };
+		F4A339C1252B53E30035C856 /* osb.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339BE252B53E30035C856 /* osb.tga */; };
+		F4A339C2252B53E30035C856 /* osb.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339BE252B53E30035C856 /* osb.tga */; };
+		F4A339D5252B7EFD0035C856 /* greenConcrete.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339D3252B7EFD0035C856 /* greenConcrete.tga */; };
+		F4A339D6252B7EFD0035C856 /* greenConcrete.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339D3252B7EFD0035C856 /* greenConcrete.tga */; };
+		F4A339D7252B7EFD0035C856 /* redConcrete.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339D4252B7EFD0035C856 /* redConcrete.tga */; };
+		F4A339D8252B7EFD0035C856 /* redConcrete.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339D4252B7EFD0035C856 /* redConcrete.tga */; };
+		F4A339E3252B8AC00035C856 /* concrete.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339E2252B8AC00035C856 /* concrete.tga */; };
+		F4A339E4252B8AC00035C856 /* concrete.tga in Resources */ = {isa = PBXBuildFile; fileRef = F4A339E2252B8AC00035C856 /* concrete.tga */; };
+		F4DC86D9252235AE007CF9D7 /* GameView.m in Sources */ = {isa = PBXBuildFile; fileRef = F4DC86D8252235AE007CF9D7 /* GameView.m */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F4921F28254CA002003E259D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4921F24254CA002003E259D /* MeshImporter.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F42EAFEC252E1A3700F3FD1A;
+			remoteInfo = MeshImporter;
+		};
+		F4921F2F254CA04B003E259D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4921F24254CA002003E259D /* MeshImporter.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F42EAFEB252E1A3700F3FD1A;
+			remoteInfo = MeshImporter;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		3E9448D520BC6BF0001DD43A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -60,8 +145,46 @@
 		51F7FFFD209BC3E90017E288 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		51F7FFFE209BC3E90017E288 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		51F7FFFF209BC3E90017E288 /* GameViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
-		78F3A0E078F4118000000001 /* SampleCode.xcconfig */ = {isa = PBXFileReference; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
-		7B1474507B1471A000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE.txt; sourceTree = "<group>"; };
+		78F3A0E078F4118000000001 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
+		7B1474507B1471A000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		F45A5B812524DF47004463C5 /* AAPLImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLImage.m; sourceTree = "<group>"; };
+		F45A5B822524DF47004463C5 /* AAPLImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLImage.h; sourceTree = "<group>"; };
+		F45A5B862524E033004463C5 /* image.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = image.tga; sourceTree = "<group>"; };
+		F489C5B525502ED800F360B6 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		F489C5BC2550332E00F360B6 /* foliage_emissive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = foliage_emissive.png; sourceTree = "<group>"; };
+		F489C5BD2550332E00F360B6 /* sand_tile_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sand_tile_baseColor.png; sourceTree = "<group>"; };
+		F489C5BE2550332E00F360B6 /* emissive_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = emissive_baseColor.png; sourceTree = "<group>"; };
+		F489C5BF2550332E00F360B6 /* building_mats_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = building_mats_baseColor.png; sourceTree = "<group>"; };
+		F489C5C02550332E00F360B6 /* foliage_02_emissive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = foliage_02_emissive.png; sourceTree = "<group>"; };
+		F489C5C12550332E00F360B6 /* material_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = material_baseColor.png; sourceTree = "<group>"; };
+		F489C5C22550332E00F360B6 /* bits_bobs_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bits_bobs_baseColor.png; sourceTree = "<group>"; };
+		F489C5C32550332E00F360B6 /* wood_trims_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = wood_trims_baseColor.png; sourceTree = "<group>"; };
+		F489C5C42550332E00F360B6 /* rocks_unique_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = rocks_unique_baseColor.png; sourceTree = "<group>"; };
+		F489C5C52550332E00F360B6 /* wood_painted_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = wood_painted_baseColor.png; sourceTree = "<group>"; };
+		F489C5C62550332E00F360B6 /* material_2_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = material_2_baseColor.png; sourceTree = "<group>"; };
+		F489C5C72550332E00F360B6 /* sand_caustics_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sand_caustics_baseColor.png; sourceTree = "<group>"; };
+		F489C5C82550332E00F360B6 /* rock_tile_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = rock_tile_baseColor.png; sourceTree = "<group>"; };
+		F489C5C92550332E00F360B6 /* foliage_02_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = foliage_02_baseColor.png; sourceTree = "<group>"; };
+		F489C5CA2550332E00F360B6 /* sails_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sails_baseColor.png; sourceTree = "<group>"; };
+		F489C5CB2550332E00F360B6 /* foliage_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = foliage_baseColor.png; sourceTree = "<group>"; };
+		F489C5CC2550332E00F360B6 /* sails_emissive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sails_emissive.png; sourceTree = "<group>"; };
+		F489C5CD2550332E00F360B6 /* emissive_emissive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = emissive_emissive.png; sourceTree = "<group>"; };
+		F489C5CE2550332E00F360B6 /* wood_planks_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = wood_planks_baseColor.png; sourceTree = "<group>"; };
+		F489C5CF2550332E00F360B6 /* water_light_baseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = water_light_baseColor.png; sourceTree = "<group>"; };
+		F489C5D02550332E00F360B6 /* scene.gltf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = scene.gltf; sourceTree = "<group>"; };
+		F489C5D12550332E00F360B6 /* scene.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = scene.bin; sourceTree = "<group>"; };
+		F489C5D32550332E00F360B6 /* Cube_BaseColor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Cube_BaseColor.png; sourceTree = "<group>"; };
+		F489C5D42550332E00F360B6 /* Cube.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = Cube.bin; sourceTree = "<group>"; };
+		F489C5D52550332E00F360B6 /* Cube_MetallicRoughness.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Cube_MetallicRoughness.png; sourceTree = "<group>"; };
+		F489C5D62550332E00F360B6 /* Cube.gltf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Cube.gltf; sourceTree = "<group>"; };
+		F4921F12254C9EDB003E259D /* libassimp.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libassimp.dylib; path = ../../../../../usr/local/lib/libassimp.dylib; sourceTree = "<group>"; };
+		F4921F24254CA002003E259D /* MeshImporter.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MeshImporter.xcodeproj; path = Libs/MeshImporter.xcodeproj; sourceTree = "<group>"; };
+		F4A339BE252B53E30035C856 /* osb.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = osb.tga; sourceTree = "<group>"; };
+		F4A339D3252B7EFD0035C856 /* greenConcrete.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = greenConcrete.tga; sourceTree = "<group>"; };
+		F4A339D4252B7EFD0035C856 /* redConcrete.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = redConcrete.tga; sourceTree = "<group>"; };
+		F4A339E2252B8AC00035C856 /* concrete.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = concrete.tga; sourceTree = "<group>"; };
+		F4DC86D7252235AE007CF9D7 /* GameView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameView.h; sourceTree = "<group>"; };
+		F4DC86D8252235AE007CF9D7 /* GameView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +200,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F489C5B625502ED900F360B6 /* CoreFoundation.framework in Frameworks */,
+				F4921F31254CA04F003E259D /* libMeshImporter.a in Frameworks */,
+				F4921F13254C9EDB003E259D /* libassimp.dylib in Frameworks */,
 				51F7FFCD209BC1C60017E288 /* MetalPerformanceShaders.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -87,7 +213,9 @@
 		51E97F632016FC6600D09D13 = {
 			isa = PBXGroup;
 			children = (
+				F489C5B92550324A00F360B6 /* Data */,
 				3E9448D520BC6BF0001DD43A /* README.md */,
+				F4921F24254CA002003E259D /* MeshImporter.xcodeproj */,
 				51E97F682016FC6600D09D13 /* MPSPathTracingSample */,
 				51E97F732016FC6700D09D13 /* Products */,
 				51E97FA42017014100D09D13 /* Frameworks */,
@@ -99,12 +227,19 @@
 		51E97F682016FC6600D09D13 /* MPSPathTracingSample */ = {
 			isa = PBXGroup;
 			children = (
+				F4A339E2252B8AC00035C856 /* concrete.tga */,
+				F4A339D3252B7EFD0035C856 /* greenConcrete.tga */,
+				F4A339D4252B7EFD0035C856 /* redConcrete.tga */,
+				F4A339BE252B53E30035C856 /* osb.tga */,
+				F45A5B862524E033004463C5 /* image.tga */,
+				F45A5B822524DF47004463C5 /* AAPLImage.h */,
+				F45A5B812524DF47004463C5 /* AAPLImage.m */,
 				51F7FFDB209BC3520017E288 /* Renderer.h */,
 				51F7FFE0209BC3520017E288 /* Renderer.mm */,
 				51C2956020A81D3300F951BE /* Scene.h */,
 				51C2956120A81D5500F951BE /* Scene.mm */,
-				51F7FFE2209BC3530017E288 /* Shaders.metal */,
 				51F7FFDF209BC3520017E288 /* ShaderTypes.h */,
+				51F7FFE2209BC3530017E288 /* Shaders.metal */,
 				51F7FFDE209BC3520017E288 /* Transforms.h */,
 				51F7FFE1209BC3530017E288 /* Transforms.mm */,
 				51F7FFEA209BC36D0017E288 /* iOS */,
@@ -125,6 +260,8 @@
 		51E97FA42017014100D09D13 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F489C5B525502ED800F360B6 /* CoreFoundation.framework */,
+				F4921F12254C9EDB003E259D /* libassimp.dylib */,
 				51564716205B0E11006AF627 /* MetalPerformanceShaders.framework */,
 				51564714205B0E0B006AF627 /* Metal.framework */,
 				51E97FA72017014A00D09D13 /* MetalPerformanceShaders.framework */,
@@ -158,6 +295,8 @@
 				51F70006209BC3F00017E288 /* Main.storyboard */,
 				51F70000209BC3E90017E288 /* Info.plist */,
 				51F70001209BC3E90017E288 /* main.m */,
+				F4DC86D7252235AE007CF9D7 /* GameView.h */,
+				F4DC86D8252235AE007CF9D7 /* GameView.m */,
 			);
 			path = macOS;
 			sourceTree = "<group>";
@@ -175,8 +314,72 @@
 			children = (
 				7B1474507B1471A000000001 /* LICENSE.txt */,
 			);
-			name = LICENSE;
 			path = LICENSE;
+			sourceTree = "<group>";
+		};
+		F489C5B92550324A00F360B6 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				F489C5D22550332E00F360B6 /* cube */,
+				F489C5BA2550332E00F360B6 /* tiki_treasure */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		F489C5BA2550332E00F360B6 /* tiki_treasure */ = {
+			isa = PBXGroup;
+			children = (
+				F489C5BB2550332E00F360B6 /* textures */,
+				F489C5D02550332E00F360B6 /* scene.gltf */,
+				F489C5D12550332E00F360B6 /* scene.bin */,
+			);
+			path = tiki_treasure;
+			sourceTree = "<group>";
+		};
+		F489C5BB2550332E00F360B6 /* textures */ = {
+			isa = PBXGroup;
+			children = (
+				F489C5BC2550332E00F360B6 /* foliage_emissive.png */,
+				F489C5BD2550332E00F360B6 /* sand_tile_baseColor.png */,
+				F489C5BE2550332E00F360B6 /* emissive_baseColor.png */,
+				F489C5BF2550332E00F360B6 /* building_mats_baseColor.png */,
+				F489C5C02550332E00F360B6 /* foliage_02_emissive.png */,
+				F489C5C12550332E00F360B6 /* material_baseColor.png */,
+				F489C5C22550332E00F360B6 /* bits_bobs_baseColor.png */,
+				F489C5C32550332E00F360B6 /* wood_trims_baseColor.png */,
+				F489C5C42550332E00F360B6 /* rocks_unique_baseColor.png */,
+				F489C5C52550332E00F360B6 /* wood_painted_baseColor.png */,
+				F489C5C62550332E00F360B6 /* material_2_baseColor.png */,
+				F489C5C72550332E00F360B6 /* sand_caustics_baseColor.png */,
+				F489C5C82550332E00F360B6 /* rock_tile_baseColor.png */,
+				F489C5C92550332E00F360B6 /* foliage_02_baseColor.png */,
+				F489C5CA2550332E00F360B6 /* sails_baseColor.png */,
+				F489C5CB2550332E00F360B6 /* foliage_baseColor.png */,
+				F489C5CC2550332E00F360B6 /* sails_emissive.png */,
+				F489C5CD2550332E00F360B6 /* emissive_emissive.png */,
+				F489C5CE2550332E00F360B6 /* wood_planks_baseColor.png */,
+				F489C5CF2550332E00F360B6 /* water_light_baseColor.png */,
+			);
+			path = textures;
+			sourceTree = "<group>";
+		};
+		F489C5D22550332E00F360B6 /* cube */ = {
+			isa = PBXGroup;
+			children = (
+				F489C5D32550332E00F360B6 /* Cube_BaseColor.png */,
+				F489C5D42550332E00F360B6 /* Cube.bin */,
+				F489C5D52550332E00F360B6 /* Cube_MetallicRoughness.png */,
+				F489C5D62550332E00F360B6 /* Cube.gltf */,
+			);
+			path = cube;
+			sourceTree = "<group>";
+		};
+		F4921F25254CA002003E259D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F4921F29254CA002003E259D /* libMeshImporter.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -189,7 +392,6 @@
 				51F7FFB2209BC1C40017E288 /* Sources */,
 				51F7FFB9209BC1C40017E288 /* Frameworks */,
 				51F7FFBB209BC1C40017E288 /* Resources */,
-				5E80BF805E80BDD000000001,
 			);
 			buildRules = (
 			);
@@ -207,11 +409,11 @@
 				51F7FFC5209BC1C60017E288 /* Sources */,
 				51F7FFCC209BC1C60017E288 /* Frameworks */,
 				51F7FFCE209BC1C60017E288 /* Resources */,
-				5E80D2605E80D0D000000001,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F4921F30254CA04B003E259D /* PBXTargetDependency */,
 			);
 			name = "MPSPathTracingSample-macOS";
 			productName = "SimpleRenderingSample-macOS";
@@ -238,6 +440,12 @@
 			mainGroup = 51E97F632016FC6600D09D13;
 			productRefGroup = 51E97F732016FC6700D09D13 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = F4921F25254CA002003E259D /* Products */;
+					ProjectRef = F4921F24254CA002003E259D /* MeshImporter.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				51F7FFB1209BC1C40017E288 /* MPSPathTracingSample-iOS */,
@@ -246,14 +454,55 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXReferenceProxy section */
+		F4921F29254CA002003E259D /* libMeshImporter.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libMeshImporter.a;
+			remoteRef = F4921F28254CA002003E259D /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
 /* Begin PBXResourcesBuildPhase section */
 		51F7FFBB209BC1C40017E288 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F489C6032550332E00F360B6 /* Cube_BaseColor.png in Resources */,
+				F489C5F52550332E00F360B6 /* foliage_baseColor.png in Resources */,
+				F489C5DB2550332E00F360B6 /* emissive_baseColor.png in Resources */,
+				F489C5E72550332E00F360B6 /* rocks_unique_baseColor.png in Resources */,
+				F489C5F92550332E00F360B6 /* emissive_emissive.png in Resources */,
+				F489C5DD2550332E00F360B6 /* building_mats_baseColor.png in Resources */,
+				F489C6072550332E00F360B6 /* Cube_MetallicRoughness.png in Resources */,
+				F489C5ED2550332E00F360B6 /* sand_caustics_baseColor.png in Resources */,
+				F489C5F32550332E00F360B6 /* sails_baseColor.png in Resources */,
+				F4A339D5252B7EFD0035C856 /* greenConcrete.tga in Resources */,
+				F489C5EF2550332E00F360B6 /* rock_tile_baseColor.png in Resources */,
+				F489C5E12550332E00F360B6 /* material_baseColor.png in Resources */,
+				F489C6012550332E00F360B6 /* scene.bin in Resources */,
+				F489C5E92550332E00F360B6 /* wood_painted_baseColor.png in Resources */,
+				F489C5E32550332E00F360B6 /* bits_bobs_baseColor.png in Resources */,
+				F489C6052550332E00F360B6 /* Cube.bin in Resources */,
+				F4A339E3252B8AC00035C856 /* concrete.tga in Resources */,
+				F489C5F12550332E00F360B6 /* foliage_02_baseColor.png in Resources */,
 				3E9448D620BC6BF0001DD43A /* README.md in Resources */,
+				F489C6092550332E00F360B6 /* Cube.gltf in Resources */,
+				F489C5FD2550332E00F360B6 /* water_light_baseColor.png in Resources */,
 				51F70013209BCA010017E288 /* LaunchScreen.storyboard in Resources */,
+				F489C5FF2550332E00F360B6 /* scene.gltf in Resources */,
+				F489C5D72550332E00F360B6 /* foliage_emissive.png in Resources */,
+				F45A5B872524E033004463C5 /* image.tga in Resources */,
+				F489C5D92550332E00F360B6 /* sand_tile_baseColor.png in Resources */,
+				F489C5E52550332E00F360B6 /* wood_trims_baseColor.png in Resources */,
+				F4A339C1252B53E30035C856 /* osb.tga in Resources */,
+				F489C5F72550332E00F360B6 /* sails_emissive.png in Resources */,
+				F489C5EB2550332E00F360B6 /* material_2_baseColor.png in Resources */,
+				F489C5DF2550332E00F360B6 /* foliage_02_emissive.png in Resources */,
 				51F70012209BCA010017E288 /* Main.storyboard in Resources */,
+				F4A339D7252B7EFD0035C856 /* redConcrete.tga in Resources */,
+				F489C5FB2550332E00F360B6 /* wood_planks_baseColor.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -261,7 +510,38 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F45A5B882524E033004463C5 /* image.tga in Resources */,
+				F489C5E02550332E00F360B6 /* foliage_02_emissive.png in Resources */,
+				F489C5DE2550332E00F360B6 /* building_mats_baseColor.png in Resources */,
+				F489C60A2550332E00F360B6 /* Cube.gltf in Resources */,
+				F489C6042550332E00F360B6 /* Cube_BaseColor.png in Resources */,
+				F489C5EA2550332E00F360B6 /* wood_painted_baseColor.png in Resources */,
+				F489C5FC2550332E00F360B6 /* wood_planks_baseColor.png in Resources */,
+				F489C6002550332E00F360B6 /* scene.gltf in Resources */,
+				F489C5F02550332E00F360B6 /* rock_tile_baseColor.png in Resources */,
+				F4A339C2252B53E30035C856 /* osb.tga in Resources */,
+				F489C5E82550332E00F360B6 /* rocks_unique_baseColor.png in Resources */,
 				51F7001A209BCA180017E288 /* Main.storyboard in Resources */,
+				F489C5E62550332E00F360B6 /* wood_trims_baseColor.png in Resources */,
+				F489C5FA2550332E00F360B6 /* emissive_emissive.png in Resources */,
+				F489C5E22550332E00F360B6 /* material_baseColor.png in Resources */,
+				F489C6062550332E00F360B6 /* Cube.bin in Resources */,
+				F489C6082550332E00F360B6 /* Cube_MetallicRoughness.png in Resources */,
+				F489C5EE2550332E00F360B6 /* sand_caustics_baseColor.png in Resources */,
+				F4A339D8252B7EFD0035C856 /* redConcrete.tga in Resources */,
+				F4A339D6252B7EFD0035C856 /* greenConcrete.tga in Resources */,
+				F489C5EC2550332E00F360B6 /* material_2_baseColor.png in Resources */,
+				F489C5E42550332E00F360B6 /* bits_bobs_baseColor.png in Resources */,
+				F489C5F82550332E00F360B6 /* sails_emissive.png in Resources */,
+				F489C5D82550332E00F360B6 /* foliage_emissive.png in Resources */,
+				F489C5F22550332E00F360B6 /* foliage_02_baseColor.png in Resources */,
+				F489C5F42550332E00F360B6 /* sails_baseColor.png in Resources */,
+				F489C5F62550332E00F360B6 /* foliage_baseColor.png in Resources */,
+				F489C5DA2550332E00F360B6 /* sand_tile_baseColor.png in Resources */,
+				F489C5FE2550332E00F360B6 /* water_light_baseColor.png in Resources */,
+				F4A339E4252B8AC00035C856 /* concrete.tga in Resources */,
+				F489C6022550332E00F360B6 /* scene.bin in Resources */,
+				F489C5DC2550332E00F360B6 /* emissive_baseColor.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -279,6 +559,7 @@
 				51F7000A209BC4040017E288 /* Renderer.mm in Sources */,
 				51C2956220A81D5500F951BE /* Scene.mm in Sources */,
 				51F70016209BCA0B0017E288 /* main.m in Sources */,
+				F45A5B832524DF47004463C5 /* AAPLImage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,13 +571,23 @@
 				51F70018209BCA110017E288 /* GameViewController.m in Sources */,
 				51F7000F209BC4050017E288 /* Transforms.mm in Sources */,
 				51F70017209BCA110017E288 /* AppDelegate.m in Sources */,
+				F4DC86D9252235AE007CF9D7 /* GameView.m in Sources */,
 				51F7000D209BC4050017E288 /* Renderer.mm in Sources */,
 				51C2956320A81D5500F951BE /* Scene.mm in Sources */,
+				F45A5B8B2524E05B004463C5 /* AAPLImage.m in Sources */,
 				51F70019209BCA110017E288 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F4921F30254CA04B003E259D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MeshImporter;
+			targetProxy = F4921F2F254CA04B003E259D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		51F70006209BC3F00017E288 /* Main.storyboard */ = {
@@ -377,6 +668,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../raytracing/MeshImporter/MeshImporter\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 			};
@@ -427,6 +719,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../raytracing/MeshImporter/MeshImporter\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
 			};
 			name = Release;
@@ -436,14 +729,18 @@
 			baseConfigurationReference = 78F3A0E078F4118000000001 /* SampleCode.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 827F74Z42X;
 				INFOPLIST_FILE = MPSPathTracingSample/iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.SimpleRenderingSample${SAMPLE_CODE_DISAMBIGUATOR}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -458,14 +755,18 @@
 			baseConfigurationReference = 78F3A0E078F4118000000001 /* SampleCode.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 827F74Z42X;
 				INFOPLIST_FILE = MPSPathTracingSample/iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.SimpleRenderingSample${SAMPLE_CODE_DISAMBIGUATOR}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -481,20 +782,26 @@
 			baseConfigurationReference = 78F3A0E078F4118000000001 /* SampleCode.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/Libs/MeshImporter\"";
 				INFOPLIST_FILE = MPSPathTracingSample/macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib/,
+					"$(PROJECT_DIR)/Libs/Assimp/bin/Release",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.SimpleRenderingSample${SAMPLE_CODE_DISAMBIGUATOR}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = /usr/local/include;
 			};
 			name = Debug;
 		};
@@ -503,20 +810,26 @@
 			baseConfigurationReference = 78F3A0E078F4118000000001 /* SampleCode.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/Libs/MeshImporter\"";
 				INFOPLIST_FILE = MPSPathTracingSample/macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib/,
+					"$(PROJECT_DIR)/Libs/Assimp/bin/Release",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.apple-samplecode.SimpleRenderingSample${SAMPLE_CODE_DISAMBIGUATOR}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = /usr/local/include;
 			};
 			name = Release;
 		};
