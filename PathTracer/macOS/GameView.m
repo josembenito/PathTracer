@@ -95,10 +95,15 @@
         NSArray* urls = [openDlg URLs];
 
         // Loop through all the files and process them.
-        for(int i = 0; i < [urls count]; i++ )
+//        for(int i = 0; i < [urls count]; i++ )
+        int i = 0;
         {
-            NSString* url = [urls objectAtIndex:i];
-            NSLog(@"Url: %@", url);
+            NSString* urlString = [urls objectAtIndex:i];
+            NSString *urlStr =[NSString stringWithFormat:@"%@", urlString];
+            NSURL *url = [NSURL URLWithString:urlStr];
+            NSLog(@"Url: %@", urlString);
+            GameViewController* gameViewController = (GameViewController*) self.viewController;
+            [gameViewController loadMeshFromUrl:url];
         }
     }
 }

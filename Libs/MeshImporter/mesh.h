@@ -74,7 +74,7 @@ struct Meshgroup {
 	std::vector<std::string> names;
 
 	static void load_default_textures() ;
-    bool load_from_file(const char* file_path,  const char* file_name, int index = 0) ;
+    bool load_from_file(const char* file_path, const char* file_name, bool absolutePath = false, int index = 0) ;
     
 #ifdef USE_OPENGL
 

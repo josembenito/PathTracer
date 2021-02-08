@@ -17,7 +17,7 @@
                BlueprintIdentifier = "51F7FFC4209BC1C60017E288"
                BuildableName = "MPSPathTracingSample-macOS.app"
                BlueprintName = "MPSPathTracingSample-macOS"
-               ReferencedContainer = "container:MPSPathTracingSample.xcodeproj">
+               ReferencedContainer = "container:PathTracer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "51F7FFC4209BC1C60017E288"
             BuildableName = "MPSPathTracingSample-macOS.app"
             BlueprintName = "MPSPathTracingSample-macOS"
-            ReferencedContainer = "container:MPSPathTracingSample.xcodeproj">
+            ReferencedContainer = "container:PathTracer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "51F7FFC4209BC1C60017E288"
             BuildableName = "MPSPathTracingSample-macOS.app"
             BlueprintName = "MPSPathTracingSample-macOS"
-            ReferencedContainer = "container:MPSPathTracingSample.xcodeproj">
+            ReferencedContainer = "container:PathTracer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

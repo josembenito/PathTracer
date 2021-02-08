@@ -74,6 +74,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     bool _makeFrameDirty;
     Node _rootSceneNode;
     float _scaleValue;
+    
+    bool _isSceneInitialized;
 }
 
 -(nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)view;
@@ -95,11 +97,11 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         _rootPosition = vec3(0,0,0);
         _scaleValue = 1.f;
         
-        [self loadMetal];
-        [self createPipelines];
-        [self createScene];
-        [self createBuffers];
-        [self createIntersector];
+//        [self loadMetal];
+//        [self createPipelines];
+//        [self createScene];
+//        [self createBuffers];
+//        [self createIntersector];
         
         _posX = 0;
         _posY = 1;
@@ -108,6 +110,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         _rotX = 0; _rotY = 0;
         
         _makeFrameDirty = false;
+        
+        _isSceneInitialized =false;
         
     }
 
@@ -195,6 +199,27 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         NSLog(@"Failed to create pipeline state, error %@", error);
 }
 
+- (void)createSceneFromUrl:(NSURL*) fileUrl
+{
+    [self loadMetal];
+    [self createPipelines];
+
+    _scaleValue = 0.0001f;
+    _lightY = 2.5f;
+    _rootPosition = vec3(0.0f, 2.6, 0.0f);
+    
+    loadMeshFromUrl((__bridge CFURLRef) fileUrl);
+    
+    // Light source
+    float4x4 transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(0.5f, _lightY, 0.5f);
+    createCube(FACE_MASK_POSITIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
+    
+    [self createBuffers];
+    [self createIntersector];
+    
+    _isSceneInitialized =true;
+}
+
 - (void)createScene
 {
     _lightY = 1.95f;
@@ -206,7 +231,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     _lightY = 2.5f;
     _rootPosition = vec3(0.0f, 2.6, 0.0f);
-      loadMesh("scene","gltf");
+    loadMeshFromBundle("scene","gltf");
 
 #endif
     
@@ -524,6 +549,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _intersector.rayDataType = MPSRayDataTypeOriginMaskDirectionMaxDistance;
     _intersector.rayStride = rayStride;
     _intersector.rayMaskOptions = MPSRayMaskOptionPrimitive;
+    _intersector.cullMode = MTLCullModeBack;
     
     // Create an acceleration structure from our vertex position data
     _accelerationStructure = [[MPSTriangleAccelerationStructure alloc] initWithDevice:_device];
@@ -720,6 +746,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
+    if (!_isSceneInitialized) return;
     // We are using the uniform buffer to stream uniform data to the GPU, so we need to wait until the oldest
     // GPU frame has completed before we can reuse that space in the buffer.
     dispatch_semaphore_wait(_sem, DISPATCH_TIME_FOREVER);

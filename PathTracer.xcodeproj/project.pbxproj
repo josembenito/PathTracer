@@ -27,6 +27,7 @@
 		51F7001A209BCA180017E288 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 51F70006209BC3F00017E288 /* Main.storyboard */; };
 		51F7FFBA209BC1C40017E288 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E97FA52017014200D09D13 /* MetalPerformanceShaders.framework */; };
 		51F7FFCD209BC1C60017E288 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E97FA72017014A00D09D13 /* MetalPerformanceShaders.framework */; };
+		F43FA2BA25D17EB700E64904 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F43FA2B925D17EB700E64904 /* Foundation.framework */; };
 		F45A5B832524DF47004463C5 /* AAPLImage.m in Sources */ = {isa = PBXBuildFile; fileRef = F45A5B812524DF47004463C5 /* AAPLImage.m */; };
 		F45A5B872524E033004463C5 /* image.tga in Resources */ = {isa = PBXBuildFile; fileRef = F45A5B862524E033004463C5 /* image.tga */; };
 		F45A5B882524E033004463C5 /* image.tga in Resources */ = {isa = PBXBuildFile; fileRef = F45A5B862524E033004463C5 /* image.tga */; };
@@ -147,6 +148,7 @@
 		51F7FFFF209BC3E90017E288 /* GameViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
 		78F3A0E078F4118000000001 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
 		7B1474507B1471A000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		F43FA2B925D17EB700E64904 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F45A5B812524DF47004463C5 /* AAPLImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLImage.m; sourceTree = "<group>"; };
 		F45A5B822524DF47004463C5 /* AAPLImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLImage.h; sourceTree = "<group>"; };
 		F45A5B862524E033004463C5 /* image.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = image.tga; sourceTree = "<group>"; };
@@ -200,6 +202,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F43FA2BA25D17EB700E64904 /* Foundation.framework in Frameworks */,
 				F489C5B625502ED900F360B6 /* CoreFoundation.framework in Frameworks */,
 				F4921F31254CA04F003E259D /* libMeshImporter.a in Frameworks */,
 				F4921F13254C9EDB003E259D /* libassimp.dylib in Frameworks */,
@@ -216,7 +219,7 @@
 				F489C5B92550324A00F360B6 /* Data */,
 				3E9448D520BC6BF0001DD43A /* README.md */,
 				F4921F24254CA002003E259D /* MeshImporter.xcodeproj */,
-				51E97F682016FC6600D09D13 /* MPSPathTracingSample */,
+				51E97F682016FC6600D09D13 /* PathTracer */,
 				51E97F732016FC6700D09D13 /* Products */,
 				51E97FA42017014100D09D13 /* Frameworks */,
 				78F3FEB078F379B000000001 /* Configuration */,
@@ -224,7 +227,7 @@
 			);
 			sourceTree = "<group>";
 		};
-		51E97F682016FC6600D09D13 /* MPSPathTracingSample */ = {
+		51E97F682016FC6600D09D13 /* PathTracer */ = {
 			isa = PBXGroup;
 			children = (
 				F4A339E2252B8AC00035C856 /* concrete.tga */,
@@ -245,7 +248,7 @@
 				51F7FFEA209BC36D0017E288 /* iOS */,
 				51F7FFEB209BC37E0017E288 /* macOS */,
 			);
-			path = MPSPathTracingSample;
+			path = PathTracer;
 			sourceTree = "<group>";
 		};
 		51E97F732016FC6700D09D13 /* Products */ = {
@@ -260,6 +263,7 @@
 		51E97FA42017014100D09D13 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F43FA2B925D17EB700E64904 /* Foundation.framework */,
 				F489C5B525502ED800F360B6 /* CoreFoundation.framework */,
 				F4921F12254C9EDB003E259D /* libassimp.dylib */,
 				51564716205B0E11006AF627 /* MetalPerformanceShaders.framework */,
@@ -429,7 +433,7 @@
 				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = Apple;
 			};
-			buildConfigurationList = 51E97F672016FC6600D09D13 /* Build configuration list for PBXProject "MPSPathTracingSample" */;
+			buildConfigurationList = 51E97F672016FC6600D09D13 /* Build configuration list for PBXProject "PathTracer" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -836,7 +840,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		51E97F672016FC6600D09D13 /* Build configuration list for PBXProject "MPSPathTracingSample" */ = {
+		51E97F672016FC6600D09D13 /* Build configuration list for PBXProject "PathTracer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				51E97F9C2016FC6700D09D13 /* Debug */,

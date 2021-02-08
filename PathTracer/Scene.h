@@ -10,6 +10,9 @@ Header for scene creation functions
 
 #include <vector>
 #include <simd/simd.h>
+#import <CoreFoundation/CFString.h>
+#import <CoreFoundation/CFURL.h>
+
 #import <mesh.h>
 
 extern std::vector<vector_float3> vertices;
@@ -36,6 +39,7 @@ void createCube(unsigned int faceMask,
                 unsigned int triangleMask,
                 unsigned int materialIndex);
 
-void loadMesh(const char* name, const char* ext = "gltf");
+void loadMeshFromBundle(const char* name, const char* ext = "gltf");
+void loadMeshFromUrl(CFURLRef filePath);
 
 #endif /* Scene_h */

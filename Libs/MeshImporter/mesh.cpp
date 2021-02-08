@@ -17,10 +17,13 @@
 //#define DMAP_IMG_FILE "DefaultDiffuseMap.png"
 #define DMAP_IMG_FILE "CheckerDiffuseMap.png"
 #define NMAP_IMG_FILE "DefaultNormalMap.png"
+#define EMAP_IMG_FILE "DefaultEmissiveMap.png"
 
 namespace {
 	Meshgroup::Texture default_diffuse;
-	Meshgroup::Texture default_normal;}
+	Meshgroup::Texture default_normal;
+    Meshgroup::Texture default_emissive;
+}
 
 
 mat4 fromAssimpTransform(const aiMatrix4x4& aiTransform) {
@@ -150,7 +153,7 @@ bool getTransform(const aiScene* scene, const aiNode* node, const aiMesh* meshGr
 	return false;
 }
 
-bool Meshgroup::load_from_file(const char* file_path, const char* file_name, int index ) {
+bool Meshgroup::load_from_file(const char* file_path, const char* file_name, bool absolutePath, int index ) {
     std::string filePathName = std::string(file_path) + std::string(file_name);
 	const aiScene* scene = aiImportFile(filePathName.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace| aiProcess_GenSmoothNormals /*| aiProcess_FlipUVs*/);
 	aiNode* aiRootNode = scene->mRootNode;
@@ -299,10 +302,36 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, int
 		}
         printf("\n");
 		mesh.index_count = mesh.face_count*3;
+        
+        auto readImageFileIntoTexture = [&absolutePath, &file_path] (Texture& tex, const aiString& path, const Texture& defaultTexture) {
+            tex.image_data = defaultTexture.image_data;
+            tex.x = defaultTexture.x;
+            tex.y = defaultTexture.y;
+            tex.n = defaultTexture.n;
+            
+            if (path.length) {
+                std::string filename = std::string(path.C_Str());
+                if (absolutePath) {
+                    // if absolute path, get rid of path parts in filename
+                    std::size_t botDirPos = filename.find_last_of("/");
+                    if (botDirPos != std::string::npos) {
+                        filename = filename.substr(botDirPos,filename.length());
+                    }
+                }
+                printf("diffuse texture:%s\n", filename.c_str());
+                std::string filePathName = std::string(file_path) + filename;
+                load_image_data(filePathName.c_str(), &tex.image_data, tex.x, tex.y, tex.n);
+                //load_texture_to_gpu(mesh.diffuse_image_data, &mesh.dmap_tex, x, y, n);
+                //unload_image_data(mesh.diffuse_image_data);
+            }
+            //else {
+                //mesh.diffuse_image_data = default_diffuse_data;
+                //load_texture_to_gpu(default_diffuse_data, &mesh.dmap_tex, default_diffuse_x, default_diffuse_y, default_diffuse_n);
+            //}
+        };
 		
 		mesh.MaterialIndex = aimesh->mMaterialIndex;
 		unsigned materialsSize = scene->mNumMaterials;
-		//for (int i = 0; i < materialsSize; ++i) {
 		if (materialsSize > mesh.MaterialIndex) {
 			const aiMaterial* material = scene->mMaterials[mesh.MaterialIndex];
             aiString name = const_cast<aiMaterial*>(material)->GetName();
@@ -315,29 +344,7 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, int
 				if (count) {
 					(*material).GetTexture(aiTextureType_DIFFUSE, 0, &path, &mapping, &uvindex);
 				}
-
-				Texture& tex= mesh.diffuse;
-				tex.image_data = default_diffuse.image_data;
-				tex.x = default_diffuse.x;
-				tex.y = default_diffuse.y;
-				tex.n = default_diffuse.n;
-                
-				if (path.length) {
-                    std::string filename = std::string(path.C_Str());
-                    std::size_t botDirPos = filename.find_last_of("/");
-                    if (botDirPos != std::string::npos) {
-                        filename = filename.substr(botDirPos,filename.length());
-                    }
-                    printf("diffuse texture:%s\n", filename.c_str());
-                    std::string filePathName = std::string(file_path) + filename;
-					load_image_data(filePathName.c_str(), &tex.image_data, tex.x, tex.y, tex.n);
-					//load_texture_to_gpu(mesh.diffuse_image_data, &mesh.dmap_tex, x, y, n);
-					//unload_image_data(mesh.diffuse_image_data);
-				}
-				//else {
-					//mesh.diffuse_image_data = default_diffuse_data;
-					//load_texture_to_gpu(default_diffuse_data, &mesh.dmap_tex, default_diffuse_x, default_diffuse_y, default_diffuse_n);
-				//}
+                readImageFileIntoTexture(mesh.diffuse, path, default_diffuse);
 			}
 			{
 				aiString path;
@@ -345,27 +352,7 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, int
 				if (count) {
 					(*material).GetTexture(aiTextureType_NORMALS, 0, &path);
 				}
-				Texture& tex= mesh.normal;
-				tex.image_data = default_normal.image_data;
-				tex.x = default_normal.x;
-				tex.y = default_normal.y;
-				tex.n = default_normal.n;
-				
-				if (path.length) {
-                    std::string filename = std::string(path.C_Str());
-                    std::size_t botDirPos = filename.find_last_of("/");
-                    if (botDirPos != std::string::npos) {
-                        filename = filename.substr(botDirPos,filename.length());
-                    }
-                    printf("normal texture:%s\n", filename.c_str());
-                    std::string filePathName = std::string(file_path) + filename;
-					load_image_data(filePathName.c_str(), &tex.image_data, tex.x, tex.y, tex.n);
-					//load_texture_to_gpu(mesh.normal_image_data, &mesh.nmap_tex, x, y, n);
-					//unload_image_data(mesh.normal_image_data);
-				}
-				//else {
-				//	load_texture_to_gpu(default_normal_data, &mesh.dmap_tex, default_normal_x, default_normal_y, default_normal_n);
-				//}
+                readImageFileIntoTexture(mesh.normal, path, default_normal);
 			}
             {
                 aiString path;
@@ -373,23 +360,7 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, int
                 if (count) {
                     (*material).GetTexture(aiTextureType_EMISSIVE, 0, &path);
                 }
-                Texture& tex= mesh.emissive;
-                
-                if (path.length) {
-                    std::string filename = std::string(path.C_Str());
-                    std::size_t botDirPos = filename.find_last_of("/");
-                    if (botDirPos != std::string::npos) {
-                        filename = filename.substr(botDirPos,filename.length());
-                    }
-                    printf("emissive texture:%s\n", filename.c_str());
-                    std::string filePathName = std::string(file_path) + filename;
-                    load_image_data(filePathName.c_str(), &tex.image_data, tex.x, tex.y, tex.n);
-                    //load_texture_to_gpu(mesh.normal_image_data, &mesh.nmap_tex, x, y, n);
-                    //unload_image_data(mesh.normal_image_data);
-                }
-                //else {
-                //    load_texture_to_gpu(default_normal_data, &mesh.dmap_tex, default_normal_x, default_normal_y, default_normal_n);
-                //}
+                readImageFileIntoTexture(mesh.emissive, path, default_emissive);
             }
 			{
 				aiColor3D color(0.f, 0.f, 0.f);
@@ -427,6 +398,7 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, int
 void Meshgroup::load_default_textures() {
 	load_image_data(DMAP_IMG_FILE, &default_diffuse.image_data, default_diffuse.x, default_diffuse.y, default_diffuse.n);
 	load_image_data(NMAP_IMG_FILE, &default_normal.image_data, default_normal.x, default_normal.y, default_normal.n);
+    load_image_data(EMAP_IMG_FILE, &default_emissive.image_data, default_emissive.x, default_emissive.y, default_emissive.n);
 }
 #ifdef USE_OPENGL
 void Meshgroup::Mesh::load_geometry_to_gpu() {

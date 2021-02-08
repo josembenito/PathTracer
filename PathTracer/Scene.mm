@@ -27,7 +27,7 @@ std::vector<uint32_t> materials;
 
 Meshgroup meshgroup;
 
-void loadMesh(const char* name, const char* ext)
+void loadMeshFromBundle(const char* name, const char* ext)
 {
     // see https://stackoverflow.com/questions/24165681/accessing-files-in-resources-folder-in-mac-osx-app-bundle/24165954
     CFStringRef nameRef;
@@ -60,8 +60,34 @@ void loadMesh(const char* name, const char* ext)
     CFRelease(stringDirectoryRef);
     CFRelease(stringNameRef);
     
-    meshgroup.load_from_file(temporaryPathCString, temporaryNameCString);
+    meshgroup.load_from_file(temporaryPathCString, temporaryNameCString, true);
 }
+
+void loadMeshFromUrl(CFURLRef urlRef)
+{
+    CFURLRef urlDirectoryFileRef = CFURLCreateCopyDeletingLastPathComponent(NULL, urlRef);
+    CFStringRef stringDirectoryRef = CFURLCopyPath(urlDirectoryFileRef);
+    CFRelease(urlDirectoryFileRef);
+    CFStringRef stringNameRef = CFURLCopyLastPathComponent(urlRef);
+    
+//    CFStringRef appStringRef = CFURLGetString ( appUrlRef );
+
+    // do something with the file
+    //...
+    const CFIndex kCStringSize = 256;
+    char temporaryNameCString[kCStringSize];
+    bzero(temporaryNameCString,kCStringSize);
+    char temporaryPathCString[kCStringSize];
+    bzero(temporaryPathCString,kCStringSize);
+    CFStringGetCString(stringNameRef, temporaryNameCString, kCStringSize, kCFStringEncodingUTF8);
+    CFStringGetCString(stringDirectoryRef, temporaryPathCString, kCStringSize, kCFStringEncodingUTF8);
+      
+    CFRelease(stringDirectoryRef);
+    CFRelease(stringNameRef);
+    
+    meshgroup.load_from_file(temporaryPathCString, temporaryNameCString, false);
+}
+
 
 float3 getTriangleNormal(float3 v0, float3 v1, float3 v2) {
     float3 e1 = normalize(v1 - v0);

@@ -149,4 +149,9 @@ Implementation for our macOS view controller
     return ret;
 }
 
+-(bool)loadMeshFromUrl:(NSURL *)fileURL
+{
+    [_renderer createSceneFromUrl:fileURL];
+    return true;
+}
 @end

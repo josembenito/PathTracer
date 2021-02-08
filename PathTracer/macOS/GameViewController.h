@@ -12,6 +12,7 @@ Header for our macOS view controller
 
 // Our macOS view controller.
 @interface GameViewController : NSViewController
+-(bool) loadMeshFromUrl:(NSURL*) fileURL;
 -(bool) viewEvent: (NSEvent *) event;
 -(void) mouseEnteredView: (NSEvent *) event;
 -(void) mouseExitedView: (NSEvent *) event;
