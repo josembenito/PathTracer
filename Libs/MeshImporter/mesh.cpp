@@ -297,7 +297,7 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 				mesh.faces_indices[i * 3] = aiface.mIndices[0];
 				mesh.faces_indices[i * 3 + 1] = aiface.mIndices[1];
 				mesh.faces_indices[i * 3 + 2] = aiface.mIndices[2];
-                printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
+                //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
 			}
 		}
         printf("\n");
@@ -308,6 +308,8 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
             tex.x = defaultTexture.x;
             tex.y = defaultTexture.y;
             tex.n = defaultTexture.n;
+            
+            Texture temp;
             
             if (path.length) {
                 std::string filename = std::string(path.C_Str());
@@ -320,7 +322,33 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
                 }
                 printf("diffuse texture:%s\n", filename.c_str());
                 std::string filePathName = std::string(file_path) + filename;
-                load_image_data(filePathName.c_str(), &tex.image_data, tex.x, tex.y, tex.n);
+                load_image_data(filePathName.c_str(), &temp.image_data, temp.x, temp.y, temp.n);
+                
+                // temp.n is original channels, but returned channels are forced to 4
+                {
+                    tex.n = 4;
+                    tex.x = temp.x;
+                    tex.y = temp.y;
+                    tex.image_data = temp.image_data;
+                }
+//                else {
+//                    if (temp.n==3) {
+//                        tex.n = 4;
+//                        tex.x = temp.x;
+//                        tex.y = temp.y;
+//                        size_t size = temp.x*temp.y;
+//                        tex.image_data = new unsigned char[size*4];
+//                        for (unsigned i=0;i<size;++i) {
+//                            tex.image_data[i*4+0]=temp.image_data[i*3+0];
+//                            tex.image_data[i*4+1]=temp.image_data[i*3+1];
+//                            tex.image_data[i*4+2]=temp.image_data[i*3+2];
+//                            tex.image_data[i*4+3]=255;
+//                            //printf("%02x%02x%02x%02x ", tex.image_data[i*4+0],tex.image_data[i*4+1],tex.image_data[i*4+2],tex.image_data[i*4+3]);
+//                            if (i%temp.x == 0) {printf("\n");}
+//                        }
+//                        delete [] temp.image_data;
+//                    }
+//                }
                 //load_texture_to_gpu(mesh.diffuse_image_data, &mesh.dmap_tex, x, y, n);
                 //unload_image_data(mesh.diffuse_image_data);
             }

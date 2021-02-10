@@ -204,7 +204,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     [self loadMetal];
     [self createPipelines];
 
-    _scaleValue = 0.0001f;
+    _scaleValue = 0.01f;
     _lightY = 2.5f;
     _rootPosition = vec3(0.0f, 2.6, 0.0f);
     
@@ -455,7 +455,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         for (int i=0;i<meshgroup.meshes.size();++i) {
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
             for (int j=0; j < meshTriangleSize; ++j) {
-                *bufferOffset = MaterialSize+i;
+                *bufferOffset = MaterialSize+i;;
                 ++bufferOffset;
             }
         }
@@ -549,7 +549,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _intersector.rayDataType = MPSRayDataTypeOriginMaskDirectionMaxDistance;
     _intersector.rayStride = rayStride;
     _intersector.rayMaskOptions = MPSRayMaskOptionPrimitive;
-    _intersector.cullMode = MTLCullModeBack;
+//    _intersector.cullMode = MTLCullModeBack;
     
     // Create an acceleration structure from our vertex position data
     _accelerationStructure = [[MPSTriangleAccelerationStructure alloc] initWithDevice:_device];
@@ -611,10 +611,6 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     assert (texture.n == 4);
     MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
     textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-//    textureDescriptor.pixelFormat = MTLPixelFormatBGRA8Unorm;
-//    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Sint;
-//    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Uint;
-//    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Snorm;
     textureDescriptor.width = texture.x;
     textureDescriptor.height = texture.y;
     

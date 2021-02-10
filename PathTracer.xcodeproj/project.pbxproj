@@ -791,7 +791,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/Libs/MeshImporter\"";
-				INFOPLIST_FILE = MPSPathTracingSample/macOS/Info.plist;
+				INFOPLIST_FILE = PathTracer/macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -819,7 +819,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/Libs/MeshImporter\"";
-				INFOPLIST_FILE = MPSPathTracingSample/macOS/Info.plist;
+				INFOPLIST_FILE = PathTracer/macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
