@@ -67,9 +67,11 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     unsigned int _frameIndex;
     
-    float _posX,_posY,_posZ;
+    vec3 _cameraPosition;
+    vec3 _lightPosition;
+    float _lightIntensity;
+
     float _rotX, _rotY;
-    float _lightY;
     vec3 _rootPosition;
     bool _makeFrameDirty;
     Node _rootSceneNode;
@@ -93,7 +95,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
         _sem = dispatch_semaphore_create(maxFramesInFlight);
         
-        _lightY = 0.f;
+        _lightPosition = vec3(0,0,0);
         _rootPosition = vec3(0,0,0);
         _scaleValue = 1.f;
         
@@ -102,10 +104,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 //        [self createScene];
 //        [self createBuffers];
 //        [self createIntersector];
-        
-        _posX = 0;
-        _posY = 1;
-        _posZ = 1.38f;
+        _cameraPosition = vec3(0,0,1.0f);
         
         _rotX = 0; _rotY = 0;
         
@@ -204,15 +203,64 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     [self loadMetal];
     [self createPipelines];
 
-    _scaleValue = 0.01f;
-    _lightY = 2.5f;
-    _rootPosition = vec3(0.0f, 2.6, 0.0f);
     
+    _lightIntensity = 4.f;
+    _lightPosition.y = 5.0f;
+    _cameraPosition = vec3(0,0,10.0f);
+    
+    loadTextureFromBundle(Meshgroup::default_diffuse, "DefaultDiffuseMap", "png");
+    loadTextureFromBundle(Meshgroup::default_normal, "DefaultNormalMap", "png");
+    loadTextureFromBundle(Meshgroup::default_emissive, "DefaultEmissiveMap", "png");
+    
+    _scaleValue = 0.001f;
+    _rootPosition = vec3(0.0f, 10.0, 0.0f);
+    
+    _rootSceneNode.init();
+
+//    _rootSceneNode.scale = vec3(_scaleValue, _scaleValue, _scaleValue);
+    _rootSceneNode.rotation = quat_from_axis_deg(45, 0, 1, 0);
+    _rootSceneNode.position = _rootPosition;
+
+
     loadMeshFromUrl((__bridge CFURLRef) fileUrl);
+    meshgroup.nodes[0].scale = vec3(_scaleValue, _scaleValue, _scaleValue);
+    _rootSceneNode.addChild(meshgroup.nodes[0]);
+
+    
+    // add light
+    // TODO: cannot add node to meshgroup nodes as pointers in mesh are relative to vector and
+    // either make nodes a list of dynamic pointers or some other trick such as
+    // separate nodes from meshes, and add indices to mesh instead of pointers
+    // make another meshgroup
+   
+//    meshgroup.meshes.push_back( Meshgroup::Mesh() );
+//    Meshgroup::Mesh& lightMesh = meshgroup.meshes[meshgroup.meshes.size()-1];
+//
+//    Meshgroup::createQuad(lightMesh);
+//
+//    meshgroup.names.push_back("light01");
+//    meshgroup.nodes.push_back(Node());
+//    Node& node = meshgroup.nodes[meshgroup.nodes.size()-1];
+//
+//    node.init();
+//
+//    node.scale = vec3(1, 1, 1);
+//    node.rotation = quat_from_axis_deg(0, 0, 1, 0);
+//    node.position = vec3(0,1,0);
+//
+//    lightMesh.node = &node;
+//
+//    _rootSceneNode.addChild(node);
+
+
+    // TODO: add light mask to lightmesh, or make emissive
     
     // Light source
-    float4x4 transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(0.5f, _lightY, 0.5f);
-    createCube(FACE_MASK_POSITIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
+    float4x4 transform = matrix4x4_translation(_lightPosition.x,_lightPosition.y, _lightPosition.z)* matrix4x4_scale(1.f, 1.f, 1.f);
+    createCube(FACE_MASK_NEGATIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
+    
+    
+    _rootSceneNode.updateHierarchy();
     
     [self createBuffers];
     [self createIntersector];
@@ -222,31 +270,31 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
 - (void)createScene
 {
-    _lightY = 1.95f;
+   _lightPosition.y = 1.95f;
 #ifdef RENDER_MESH
 //    _scaleValue = 0.25f;
 //    loadMesh("Cube","gltf");
     _scaleValue = 0.0001f;
     
 
-    _lightY = 2.5f;
+   _lightPosition.y = 2.5f;
     _rootPosition = vec3(0.0f, 2.6, 0.0f);
     loadMeshFromBundle("scene","gltf");
 
 #endif
     
     
-    float4x4 transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(0.5f, _lightY, 0.5f);
+    float4x4 transform = matrix4x4_translation(_lightPosition.x,_lightPosition.y, _lightPosition.z) * matrix4x4_scale(0.5f, 0.5f, 0.5f);
     
     // Light source
-    createCube(FACE_MASK_POSITIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
+    createCube(FACE_MASK_NEGATIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
     
      transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(2.f, 2.f, 2.f);
        // Top, bottom, and back walls
 //    createCube(FACE_MASK_NEGATIVE_Y | FACE_MASK_POSITIVE_Y | FACE_MASK_NEGATIVE_Z, vector3(0.725f, 0.71f, 0.68f), transform, true, TRIANGLE_MASK_GEOMETRY, ConcreteMaterial);
 
     // Left wall
-//    createCube(FACE_MASK_NEGATIVE_X, vector3(0.63f, 0.065f, 0.05f), transform, true, TRIANGLE_MASK_GEOMETRY, RedConcreteMaterial);
+    createCube(FACE_MASK_NEGATIVE_X, vector3(0.63f, 0.065f, 0.05f), transform, true, TRIANGLE_MASK_GEOMETRY, RedConcreteMaterial);
 
     // Right wall
 //    createCube(FACE_MASK_POSITIVE_X, vector3(0.14f, 0.45f, 0.091f), transform, true, TRIANGLE_MASK_GEOMETRY, GreenConcreteMaterial);
@@ -329,17 +377,6 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         _materialIdsBuffer = [_device newBufferWithLength:size* sizeof(uint32_t) options:options];
     }
 
-    // transform vertices and normals to their world position
-    
-    
-    _rootSceneNode.init();
-    _rootSceneNode.addChild(meshgroup.nodes[0]);
-    
-    _rootSceneNode.scale = vec3(_scaleValue, _scaleValue, _scaleValue);
-    _rootSceneNode.position = _rootPosition;
-    _rootSceneNode.rotation = quat_from_axis_deg(45, 0, 1, 0);
-
-    _rootSceneNode.updateHierarchy();
     
     auto inplaceTransformVector3 = [](mat4 A, float* src, size_t count) {
         for (int i=0;i<count;++i) {
@@ -441,12 +478,11 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         bufferOffset+=masks.size();
         for (int i=0;i<meshgroup.meshes.size();++i) {
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
-            for (int i=0; i < meshTriangleSize; ++i) {
+            for (int j=0; j < meshTriangleSize; ++j) {
                 *bufferOffset = TRIANGLE_MASK_GEOMETRY;
                 ++bufferOffset;
             }
         }
-
     }
     {
         uint32_t* bufferOffset = (uint32_t*)_materialIdsBuffer.contents;
@@ -549,7 +585,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _intersector.rayDataType = MPSRayDataTypeOriginMaskDirectionMaxDistance;
     _intersector.rayStride = rayStride;
     _intersector.rayMaskOptions = MPSRayMaskOptionPrimitive;
-//    _intersector.cullMode = MTLCullModeBack;
+    _intersector.cullMode = MTLCullModeBack;
     
     // Create an acceleration structure from our vertex position data
     _accelerationStructure = [[MPSTriangleAccelerationStructure alloc] initWithDevice:_device];
@@ -694,7 +730,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     Uniforms *uniforms = (Uniforms *)((char *)_uniformBuffer.contents + _uniformBufferOffset);
 
-    uniforms->camera.position = vector3(_posX, _posY, _posZ);
+    uniforms->camera.position = vector3(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z);
 
 //    uniforms->camera.forward = vector3(0.0f, 0.0f, -1.0f);
 //    uniforms->camera.right = vector3(1.0f, 0.0f, 0.0f);
@@ -706,14 +742,12 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     uniforms->camera.right = transformVector(cameraRotation, vector3(1.0f, 0.0f,0.0f));
     uniforms->camera.up = transformVector(cameraRotation, vector3(0.0f, 1.0f,0.0f));
     
-    uniforms->light.position = vector3(0.0f, _lightY, 0.0f);
+    uniforms->light.position = vector3(_lightPosition.x,_lightPosition.y, _lightPosition.z);
     uniforms->light.forward = vector3(0.0f, -1.0f, 0.0f);
     uniforms->light.right = vector3(1.f, 0.0f, 0.0f);
     uniforms->light.up = vector3(0.0f, 0.0f, 1.f);
 
-//    uniforms->light.right = vector3(0.25f, 0.0f, 0.0f);
-//    uniforms->light.up = vector3(0.0f, 0.0f, 0.25f);
-    uniforms->light.color = vector3(4.0f, 4.0f, 4.0f);
+    uniforms->light.color = _lightIntensity*vector3(1.0f, 1.0f, 1.0f);
     // frame index is used in the accumulation phase to decide what to mix from previous
     // setting it to 0 will give all weight to new color so that it effectively "clears" the accumulation buffer
     _frameIndex = _makeFrameDirty? 0:_frameIndex;
@@ -777,20 +811,14 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     // commands to the command buffer.
     id <MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
     
-    // Bind buffers needed by the compute pipeline
     [computeEncoder setBuffer:_uniformBuffer   offset:_uniformBufferOffset atIndex:0];
     [computeEncoder setBuffer:_rayBuffer       offset:0                    atIndex:1];
     
     [computeEncoder setTexture:_randomTexture    atIndex:0];
     [computeEncoder setTexture:_renderTargets[0] atIndex:1];
-    
-    // Bind the ray generation compute pipeline
     [computeEncoder setComputePipelineState:_rayPipeline];
-    
-    // Launch threads
+
     [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
-    
-    // End the encoder
     [computeEncoder endEncoding];
     
     // We will iterate over the next few kernels several times to allow light to bounce around the scene
@@ -814,7 +842,6 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         [computeEncoder setBuffer:_rayBuffer          offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:index++];
-//        [computeEncoder setBuffer:_vertexColorBuffer  offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_vertexNormalBuffer offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_vertexCoordsBuffer offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_triangleMaskBuffer offset:0                    atIndex:index++];
@@ -822,14 +849,15 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         [computeEncoder setBuffer:_indexBuffer        offset:0                    atIndex:index++];
         [computeEncoder setBytes:&bounce              length:sizeof(bounce)       atIndex:index++];
         
-        [computeEncoder setTexture:_randomTexture  atIndex:AAPLArgumentBufferIDRandom];
-//        for (NSUInteger i=0;i<[_colorTexture count]; ++i) {
-        for (NSUInteger i=0;i<[_colorTexture count]; ++i) {
-            [computeEncoder setTexture:_colorTexture[i] atIndex:AAPLArgumentBufferIDColor+i];
-        }
-        [computeEncoder setTexture:_renderTargets[0] atIndex:AAPLArgumentBufferIDRenderTarget];
-
+        short int textureIndex = 0;
         
+        [computeEncoder setTexture:_randomTexture  atIndex:textureIndex++];
+        for (NSUInteger i=0;i<MaxMaterialSize; ++i) {
+            id<MTLTexture> texture = i < [_colorTexture count] ? _colorTexture[i] : NULL;
+            [computeEncoder setTexture:texture atIndex:textureIndex++];
+        }
+        [computeEncoder setTexture:_renderTargets[0] atIndex:textureIndex++];
+
         [computeEncoder setComputePipelineState:_shadePipeline];
         
         [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
@@ -922,9 +950,12 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 }
 -(void) moveCameraWithSpeedX:(float)x Y:(float)y Z:(float)z RX:(float)rx RY:(float)ry;
 {
-    _posX += x;
-    _posY += y;
-    _posZ += z;
+    _cameraPosition.x += x;
+    _cameraPosition.y += y;
+    _cameraPosition.z += z;
+//    _posX += x;
+//    _posY += y;
+//    _posZ += z;
     _rotX += rx;
     _rotY += ry;
     

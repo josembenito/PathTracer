@@ -80,46 +80,47 @@ Implementation for our macOS view controller
 -(bool) viewEvent: (NSEvent *) event
 {
     bool ret = false;
+    const float moveLength = 1.f;
     float x = 0, y = 0, z = 0, rx = 0, ry = 0;
     if ([event type] == NSEventTypeKeyUp ) {
         if( [event keyCode] == 123) {
-            x=-0.1;
+            x=-moveLength;
             ret = true;
         }
         if( [event keyCode] == 124) {
-            x=0.1;
+            x=moveLength;
             ret = true;
         }
         if( [event keyCode] == 125) {
-            z=0.1;
+            z=moveLength;
             ret = true;
         }
         if( [event keyCode] == 126) {
-            z=-0.1;
+            z=-moveLength;
             ret = true;
         }
         if( [event keyCode] == 116) {
-            y=0.1;
+            y=moveLength;
             ret = true;
         }
         if( [event keyCode] == 121) {
-            y=-0.1;
+            y=-moveLength;
             ret = true;
         }
         if( [event keyCode] == 0) {
-            ry=0.1;
+            ry=moveLength;
             ret = true;
         }
         if( [event keyCode] == 2) {
-            ry=-0.1;
+            ry=-moveLength;
             ret = true;
         }
         if( [event keyCode] == 13) {
-            rx=0.1;
+            rx=moveLength;
             ret = true;
         }
         if( [event keyCode] == 1) {
-            rx=-0.1;
+            rx=-moveLength;
             ret = true;
         }
     }

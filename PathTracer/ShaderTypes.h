@@ -59,7 +59,7 @@ typedef enum AAPLArgumentBufferID
 {
     AAPLArgumentBufferIDRandom  = 0,
     AAPLArgumentBufferIDColor   = 1,
-    AAPLArgumentBufferIDRenderTarget = AAPLArgumentBufferIDColor+MaterialSize
+    AAPLArgumentBufferIDRenderTarget = AAPLArgumentBufferIDColor+MaxMaterialSize
 } AAPLArgumentBufferID;
 
 #endif /* ShaderTypes_h */

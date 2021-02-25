@@ -208,9 +208,7 @@ inline void sampleAreaLight(constant AreaLight & light,
     u = u * 2.0f - 1.0f;
     
     // Transform into light's coordinate system
-    float3 samplePosition = light.position +
-                            light.right * u.x +
-                            light.up * u.y;
+    float3 samplePosition = light.position; // + light.right * u.x + light.up * u.y;
     
     // Compute vector from sample point on light source to intersection point
     lightDirection = samplePosition - position;
@@ -229,7 +227,7 @@ inline void sampleAreaLight(constant AreaLight & light,
     //lightColor *= (inverseLightDistance * inverseLightDistance);
     
     // uncomment if light area should be one sided (only forward)
-//    lightColor *= saturate(dot(-lightDirection, light.forward));
+    lightColor *= saturate(dot(-lightDirection, light.forward));
 }
 
 // Aligns a direction on the unit hemisphere such that the hemisphere's "up" direction
@@ -310,17 +308,14 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                 
                 // Compute the direction to, color, and distance to a random point on the light
                 // source
-                sampleAreaLight(uniforms.light, r, intersectionPoint, lightDirection,
-                                lightColor, lightDistance);
+                sampleAreaLight(uniforms.light, r, intersectionPoint, lightDirection, lightColor, lightDistance);
                 
                 // Scale the light color by the cosine of the angle between the light direction and
                 // surface normal
-                lightColor *= saturate(dot(surfaceNormal, lightDirection));
+                lightColor *= saturate(dot(surfaceNormal, -lightDirection));
                 //float2 uvs = interpolateVertexAttribute(vertexCoords,intersection);
                 float2 uvs = interpolateVertexAttributeIndexed(vertexCoords,intersection, indices);
 
-                // Interpolate the vertex color at the intersection point
-                //color *= interpolateVertexAttribute(vertexColors, intersection);
                 
                 // todo: get texture color here
                 // Sample the texture to obtain a color
@@ -363,8 +358,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                 // sample direction and surface normal, the math entirely cancels out except for
                 // multiplying by the interpolated vertex color. This sampling strategy also reduces
                 // the amount of noise in the output image.
-                r = float2(halton(offset + uniforms.frameIndex, 2 + bounce * 4 + 2),
-                           halton(offset + uniforms.frameIndex, 2 + bounce * 4 + 3));
+                r = float2(halton(offset + uniforms.frameIndex, 2 + bounce * 4 + 2), halton(offset + uniforms.frameIndex, 2 + bounce * 4 + 3));
                 
                 float3 sampleDirection = sampleCosineWeightedHemisphere(r);
                 sampleDirection = alignHemisphereWithNormal(sampleDirection, surfaceNormal);
@@ -385,6 +379,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
             }
         }
         else {
+//            dstTex.write(float4(0.4f,0.4f,0.6f, 1.0f), tid);
             // The ray missed the scene, so terminate the ray's path
             ray.maxDistance = -1.0f;
             shadowRay.maxDistance = -1.0f;
@@ -415,15 +410,25 @@ kernel void shadowKernel(uint2 tid [[thread_position_in_grid]],
         // If the shadow ray wasn't disabled (max distance >= 0) and it didn't hit anything
         // on the way to the light source, add the color passed along with the shadow ray
         // to the output image.
-        float3 ambient(0.1f,0.1f,0.2f);
+        //float3 ambient(0.1f,0.1f,0.2f);
         //color += shadowRay.color;
-        if (shadowRay.maxDistance >= 0.0f && intersectionDistance < 0.0f)
-            color += shadowRay.color;
-        else
-            color += shadowRay.color*ambient;
-        
-        // Write result to render target
-        dstTex.write(float4(color, 1.0f), tid);
+        if (shadowRay.maxDistance >= 0.0f) {
+            if (intersectionDistance < 0.0f) {
+                color += shadowRay.color;
+            }
+//            else {
+//                color += shadowRay.color;
+//             }
+//        }
+//        else {
+//            color = float3(1,0,0);
+        }
+        //else
+        //    color += shadowRay.color*ambient;
+            
+
+            // Write result to render target
+        dstTex.write(float4(color,1.0f), tid);
     }
 }
 

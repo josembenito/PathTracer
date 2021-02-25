@@ -14,16 +14,14 @@
 #include "maths_funcs.h"
 #include "gl_utils.h"
 
-//#define DMAP_IMG_FILE "DefaultDiffuseMap.png"
-#define DMAP_IMG_FILE "CheckerDiffuseMap.png"
-#define NMAP_IMG_FILE "DefaultNormalMap.png"
-#define EMAP_IMG_FILE "DefaultEmissiveMap.png"
 
-namespace {
-	Meshgroup::Texture default_diffuse;
-	Meshgroup::Texture default_normal;
-    Meshgroup::Texture default_emissive;
-}
+const char* Meshgroup::DefaultDiffuseMap = "DefaultDiffuseMap.png";
+const char* Meshgroup::DefaultNormalMap = "DefaultNormalMap.png";
+const char* Meshgroup::DefaultEmissiveMap =  "DefaultEmissiveMap.png";
+
+Meshgroup::Texture Meshgroup::default_diffuse;
+Meshgroup::Texture Meshgroup::default_normal;
+Meshgroup::Texture Meshgroup::default_emissive;
 
 
 mat4 fromAssimpTransform(const aiMatrix4x4& aiTransform) {
@@ -50,14 +48,6 @@ size_t getNodeHierarchySize( const aiNode* ainode )
 
 void getNodeHierarchy(std::vector<Node>& nodes, size_t nodeIndex, size_t& currentSize,  const aiNode* ainode,  std::vector<Meshgroup::Mesh>& meshes, std::vector<std::string>& names) 
 {
-	// WARNING: this will not do, need decompose
-	//aiMatrix4x4 local = ainode->mTransformation;
-	//aiVector3D aiposition;
-	//aiVector3D aiscale;
-	//aiQuaternion airotation;
-
-	//local.Decompose(aiscale, airotation, aiposition);
-
 	mat4 localMatrix = fromAssimpTransform(ainode->mTransformation);
 
 	vec3 position(0,0,0);
@@ -65,20 +55,10 @@ void getNodeHierarchy(std::vector<Node>& nodes, size_t nodeIndex, size_t& curren
 	versor rotation(0,0,0,1);
 	localMatrix.decompose(rotation, position, scale);
 	
-	//printf("ReadName:%s\n", ainode->mName.C_Str());
-	//print(localMatrix);
-
 	Node& node = nodes[nodeIndex];
-	//node.position = vec3 (aiposition.x, aiposition.y, aiposition.z);
-	//node.rotation = versor(airotation.x, airotation.y, airotation.z, airotation.w);
-	//node.scale = vec3(aiscale.x,aiscale.y,aiscale.z);
 	node.position = position;
 	node.rotation = rotation;
 	node.scale = scale;
-
-	//print(node.position);
-	//print(node.rotation);
-	//print(node.scale);
 
 	mat4 localMatrix2 = quat_to_mat4(node.rotation);
 	localMatrix2.setColumn(3, vec4(node.position, 1));
@@ -104,7 +84,6 @@ void getNodeHierarchy(std::vector<Node>& nodes, size_t nodeIndex, size_t& curren
 	}
 
 	for (unsigned i = 0; i < childCount; ++i) {
-//		Node& child = nodes[nodeIndex + i];
 		aiNode* aiChild = ainode->mChildren[i];
 		getNodeHierarchy(nodes, nodeIndex + i, currentSize, aiChild, meshes, names);
 	}
@@ -153,9 +132,105 @@ bool getTransform(const aiScene* scene, const aiNode* node, const aiMesh* meshGr
 	return false;
 }
 
-bool Meshgroup::load_from_file(const char* file_path, const char* file_name, bool absolutePath, int index ) {
+
+
+void Meshgroup::load_texture(Texture& tex, const char* file_path, const char* file_name, bool absolutePath)
+{
+    Meshgroup::Texture temp;
+    
+    std::string filename = std::string(file_name);
+    if (absolutePath) {
+        // if absolute path, get rid of path parts in filename
+        std::size_t botDirPos = filename.find_last_of("/");
+        if (botDirPos != std::string::npos) {
+            filename = filename.substr(botDirPos,filename.length());
+        }
+    }
+    printf("diffuse texture:%s\n", filename.c_str());
+    std::string filePathName = std::string(file_path) + filename;
+    load_image_data(filePathName.c_str(), &temp.image_data, temp.x, temp.y, temp.n);
+    
+    // temp.n is original channels, but returned channels are forced to 4
+    {
+        tex.n = 4;
+        tex.x = temp.x;
+        tex.y = temp.y;
+        tex.image_data = temp.image_data;
+    }
+
+}
+
+void Meshgroup::createQuad(Mesh& mesh) {
+        
+    mesh.vertex_count = 4;
+    mesh.face_count = 2;
+    mesh.index_count = mesh.face_count*3;
+
+    // allocate memory for vertex points
+    mesh.vp = (float*)malloc(mesh.vertex_count * 3 * sizeof(float));
+    mesh.vn = (float*)malloc(mesh.vertex_count * 3 * sizeof(float));
+    mesh.faces_indices = (unsigned*)malloc(mesh.face_count * 3 * sizeof(unsigned));
+    
+    size_t uvs_channels = 1;
+    mesh.uvs.resize(uvs_channels);
+    for (int i = 0; i < uvs_channels; ++i) {
+        mesh.uvs[i] = (float*)malloc(mesh.vertex_count * 2 * sizeof(float));
+    }
+
+
+    vec3 cubeVertices[] = {
+        vec3( 0.5f, 0.0f, -0.5f),
+        vec3( 0.5f,  0.f, 0.5f),
+        vec3(-0.5f,  0.f, 0.5f),
+        vec3(-0.5f, 0.0f, -0.5f),
+    };
+    vec2 uvs[] = {
+        vec2(1,0),
+        vec2(1,1),
+        vec2(0,1),
+        vec2(0,0),
+    };
+    for (int i=0;i<mesh.vertex_count;++i) {
+        mesh.vp[i * 3] = cubeVertices[i].x;
+        mesh.vp[i * 3 + 1] = cubeVertices[i].y;
+        mesh.vp[i * 3 + 2] = cubeVertices[i].z;
+
+        mesh.vn[i * 3] = 0;
+        mesh.vn[i * 3 + 1] = 1;
+        mesh.vn[i * 3 + 2] = 0;
+        
+        for (int j=0;j<uvs_channels;++j) {
+            mesh.uvs[j][i*2] = uvs[i].x;
+            mesh.uvs[j][i*2+1] = uvs[i].y;
+        }
+    }
+    
+    uint32_t vertexIndices[6] = {0,1,2,0,2,3};
+    
+    for (int i=0;i<mesh.face_count;++i) {
+        mesh.faces_indices[i * 3] = vertexIndices[i*3];
+        mesh.faces_indices[i * 3 + 1] = vertexIndices[i*3+1];;
+        mesh.faces_indices[i * 3 + 2] = vertexIndices[i*3+2];;
+    }
+    //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
+
+    // WARNING: careful not to delete these!
+    mesh.diffuse = default_diffuse;
+    mesh.normal = default_normal;
+    mesh.emissive = default_emissive;
+
+    mesh.diffuse_base_color = vec3(1,1,1);
+}
+
+bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool absolutePath, int index ) {
     std::string filePathName = std::string(file_path) + std::string(file_name);
 	const aiScene* scene = aiImportFile(filePathName.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace| aiProcess_GenSmoothNormals /*| aiProcess_FlipUVs*/);
+    if (scene->mMetaData) {
+        for (int i=0;i<scene->mMetaData->mNumProperties;++i) {
+            aiString property;
+            printf ("Metadata property:%s\n", scene->mMetaData->mKeys[i].C_Str());
+        }
+    }
 	aiNode* aiRootNode = scene->mRootNode;
 
 	if (!scene) {
@@ -181,15 +256,15 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 		aiNode* node = getMeshNode(scene, aiRootNode, aimesh);
 		printf("mesh %d:%s\n", m, node->mName.C_Str());
 //        strncpy (mesh.name, node->mName.C_Str(), node->mName.length);
-		mat4 transform = transpose(mat4( 
-			aiTransform.a1, aiTransform.a2, aiTransform.a3, aiTransform.a4,
-			aiTransform.b1, aiTransform.b2, aiTransform.b3, aiTransform.b4,
-			aiTransform.c1, aiTransform.c2, aiTransform.c3, aiTransform.c4,
-			aiTransform.d1, aiTransform.d2, aiTransform.d3, aiTransform.d4
-		));
+//		mat4 transform = transpose(mat4(
+//			aiTransform.a1, aiTransform.a2, aiTransform.a3, aiTransform.a4,
+//			aiTransform.b1, aiTransform.b2, aiTransform.b3, aiTransform.b4,
+//			aiTransform.c1, aiTransform.c2, aiTransform.c3, aiTransform.c4,
+//			aiTransform.d1, aiTransform.d2, aiTransform.d3, aiTransform.d4
+//		));
 
-		print(transform);
-		printf("    %i vertices in mesh[%d]\n", aimesh->mNumVertices, m);
+//		print(transform);
+//		printf("    %i vertices in mesh[%d]\n", aimesh->mNumVertices, m);
 		mesh.vertex_count = aimesh->mNumVertices;
 		mesh.face_count = aimesh->mNumFaces;
 
@@ -235,14 +310,14 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 				mesh.vp[i * 3] = (float)aivp->x;
 				mesh.vp[i * 3 + 1] = (float)aivp->y;
 				mesh.vp[i * 3 + 2] = (float)aivp->z;
-                printf("vp :[%0.3f,%0.3f,%0.3f]\n", mesh.vp[i*3],mesh.vp[i*3+1],mesh.vp[i*3+2]);
+//                printf("vp :[%0.3f,%0.3f,%0.3f]\n", mesh.vp[i*3],mesh.vp[i*3+1],mesh.vp[i*3+2]);
 			}
 			if (aimesh->HasNormals()) {
 				const aiVector3D* aivn = &(aimesh->mNormals[i]);
 				mesh.vn[i * 3] = (float)aivn->x;
 				mesh.vn[i * 3 + 1] = (float)aivn->y;
 				mesh.vn[i * 3 + 2] = (float)aivn->z;
-                printf("vn :[%0.3f,%0.3f,%0.3f]\n", mesh.vn[i*3],mesh.vn[i*3+1],mesh.vn[i*3+2]);
+//                printf("vn :[%0.3f,%0.3f,%0.3f]\n", mesh.vn[i*3],mesh.vn[i*3+1],mesh.vn[i*3+2]);
 			}
 			//if (aimesh->GetNumColorChannels() > 0 && aimesh->HasVertexColors(0)) {
 			//	const aiColor4D* aivc = &(aimesh->mColors[0][i]);
@@ -258,7 +333,7 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 					mesh.uvs[j][i * 2] = (float)aivt->x;
 					mesh.uvs[j][i * 2 + 1] = (float)aivt->y;
 
-					printf("uv :[%0.2f,%0.2f]\n", mesh.uvs[j][i * 2], mesh.uvs[j][i * 2 + 1]);
+//					printf("uv :[%0.2f,%0.2f]\n", mesh.uvs[j][i * 2], mesh.uvs[j][i * 2 + 1]);
 				}
 			}
 			if (aimesh->HasTangentsAndBitangents()) {
@@ -300,68 +375,14 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
                 //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
 			}
 		}
-        printf("\n");
+//        printf("\n");
 		mesh.index_count = mesh.face_count*3;
-        
-        auto readImageFileIntoTexture = [&absolutePath, &file_path] (Texture& tex, const aiString& path, const Texture& defaultTexture) {
-            tex.image_data = defaultTexture.image_data;
-            tex.x = defaultTexture.x;
-            tex.y = defaultTexture.y;
-            tex.n = defaultTexture.n;
-            
-            Texture temp;
-            
-            if (path.length) {
-                std::string filename = std::string(path.C_Str());
-                if (absolutePath) {
-                    // if absolute path, get rid of path parts in filename
-                    std::size_t botDirPos = filename.find_last_of("/");
-                    if (botDirPos != std::string::npos) {
-                        filename = filename.substr(botDirPos,filename.length());
-                    }
-                }
-                printf("diffuse texture:%s\n", filename.c_str());
-                std::string filePathName = std::string(file_path) + filename;
-                load_image_data(filePathName.c_str(), &temp.image_data, temp.x, temp.y, temp.n);
-                
-                // temp.n is original channels, but returned channels are forced to 4
-                {
-                    tex.n = 4;
-                    tex.x = temp.x;
-                    tex.y = temp.y;
-                    tex.image_data = temp.image_data;
-                }
-//                else {
-//                    if (temp.n==3) {
-//                        tex.n = 4;
-//                        tex.x = temp.x;
-//                        tex.y = temp.y;
-//                        size_t size = temp.x*temp.y;
-//                        tex.image_data = new unsigned char[size*4];
-//                        for (unsigned i=0;i<size;++i) {
-//                            tex.image_data[i*4+0]=temp.image_data[i*3+0];
-//                            tex.image_data[i*4+1]=temp.image_data[i*3+1];
-//                            tex.image_data[i*4+2]=temp.image_data[i*3+2];
-//                            tex.image_data[i*4+3]=255;
-//                            //printf("%02x%02x%02x%02x ", tex.image_data[i*4+0],tex.image_data[i*4+1],tex.image_data[i*4+2],tex.image_data[i*4+3]);
-//                            if (i%temp.x == 0) {printf("\n");}
-//                        }
-//                        delete [] temp.image_data;
-//                    }
-//                }
-                //load_texture_to_gpu(mesh.diffuse_image_data, &mesh.dmap_tex, x, y, n);
-                //unload_image_data(mesh.diffuse_image_data);
-            }
-            //else {
-                //mesh.diffuse_image_data = default_diffuse_data;
-                //load_texture_to_gpu(default_diffuse_data, &mesh.dmap_tex, default_diffuse_x, default_diffuse_y, default_diffuse_n);
-            //}
-        };
+
 		
-		mesh.MaterialIndex = aimesh->mMaterialIndex;
+		unsigned int materialIndex = aimesh->mMaterialIndex;
 		unsigned materialsSize = scene->mNumMaterials;
-		if (materialsSize > mesh.MaterialIndex) {
-			const aiMaterial* material = scene->mMaterials[mesh.MaterialIndex];
+		if (materialsSize > materialIndex) {
+			const aiMaterial* material = scene->mMaterials[materialIndex];
             aiString name = const_cast<aiMaterial*>(material)->GetName();
             printf("material:%s\n", name.C_Str());
 			{
@@ -372,7 +393,9 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 				if (count) {
 					(*material).GetTexture(aiTextureType_DIFFUSE, 0, &path, &mapping, &uvindex);
 				}
-                readImageFileIntoTexture(mesh.diffuse, path, default_diffuse);
+                if (path.length) {
+                    load_texture(mesh.diffuse, file_path, path.C_Str(), absolutePath);
+                }
 			}
 			{
 				aiString path;
@@ -380,7 +403,9 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 				if (count) {
 					(*material).GetTexture(aiTextureType_NORMALS, 0, &path);
 				}
-                readImageFileIntoTexture(mesh.normal, path, default_normal);
+                if (path.length) {
+                    load_texture(mesh.normal, file_path, path.C_Str(), absolutePath);
+                }
 			}
             {
                 aiString path;
@@ -388,7 +413,9 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
                 if (count) {
                     (*material).GetTexture(aiTextureType_EMISSIVE, 0, &path);
                 }
-                readImageFileIntoTexture(mesh.emissive, path, default_emissive);
+                if (path.length) {
+                    load_texture(mesh.emissive, file_path, path.C_Str(), absolutePath);
+                }
             }
 			{
 				aiColor3D color(0.f, 0.f, 0.f);
@@ -412,7 +439,6 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 	for (size_t i = 0; i < nodeSize; ++i) {
 		nodes[i].init();
 	}
-	// TODO: evaluate if this is working (it is not)
 	size_t currentSize = 1;
 	getNodeHierarchy(nodes, 0, currentSize, aiRootNode, meshes, names);
 	
@@ -423,11 +449,6 @@ bool Meshgroup::load_from_file(const char* file_path, const char* file_name, boo
 	return true;
 }
 
-void Meshgroup::load_default_textures() {
-	load_image_data(DMAP_IMG_FILE, &default_diffuse.image_data, default_diffuse.x, default_diffuse.y, default_diffuse.n);
-	load_image_data(NMAP_IMG_FILE, &default_normal.image_data, default_normal.x, default_normal.y, default_normal.n);
-    load_image_data(EMAP_IMG_FILE, &default_emissive.image_data, default_emissive.x, default_emissive.y, default_emissive.n);
-}
 #ifdef USE_OPENGL
 void Meshgroup::Mesh::load_geometry_to_gpu() {
 

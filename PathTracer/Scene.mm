@@ -27,9 +27,41 @@ std::vector<uint32_t> materials;
 
 Meshgroup meshgroup;
 
+void loadTextureFromBundle(Meshgroup::Texture &texture, const char* name, const char* ext)
+{
+    CFStringRef nameRef;
+    nameRef = CFStringCreateWithCString(kCFAllocatorDefault, name, kCFStringEncodingUTF8);
+    CFStringRef extRef;
+    extRef = CFStringCreateWithCString(kCFAllocatorDefault, ext, kCFStringEncodingUTF8);
+    CFURLRef urlRef = CFBundleCopyResourceURL(CFBundleGetMainBundle(), nameRef, extRef, NULL);
+    CFRelease(nameRef);
+    CFRelease(extRef);
+    
+    CFURLRef urlDirectoryFileRef = CFURLCreateCopyDeletingLastPathComponent(NULL, urlRef);
+    CFStringRef stringDirectoryRef = CFURLCopyPath(urlDirectoryFileRef);
+    CFStringRef stringNameRef = CFURLCopyLastPathComponent(urlRef);
+    
+    // do something with the file
+    //...
+    const CFIndex kCStringSize = 256;
+    char temporaryNameCString[kCStringSize];
+    bzero(temporaryNameCString,kCStringSize);
+    char temporaryPathCString[kCStringSize];
+    bzero(temporaryPathCString,kCStringSize);
+    CFStringGetCString(stringNameRef, temporaryNameCString, kCStringSize, kCFStringEncodingUTF8);
+    CFStringGetCString(stringDirectoryRef, temporaryPathCString, kCStringSize, kCFStringEncodingUTF8);
+    
+    // Ensure you release the reference
+    CFRelease(urlRef);
+    CFRelease(urlDirectoryFileRef);
+    CFRelease(stringDirectoryRef);
+    CFRelease(stringNameRef);
+
+    Meshgroup::load_texture(texture, temporaryPathCString, temporaryNameCString, true);
+}
+
 void loadMeshFromBundle(const char* name, const char* ext)
 {
-    // see https://stackoverflow.com/questions/24165681/accessing-files-in-resources-folder-in-mac-osx-app-bundle/24165954
     CFStringRef nameRef;
     nameRef = CFStringCreateWithCString(kCFAllocatorDefault,name,kCFStringEncodingUTF8);
     CFStringRef extRef;
@@ -42,8 +74,6 @@ void loadMeshFromBundle(const char* name, const char* ext)
     CFStringRef stringDirectoryRef = CFURLCopyPath(urlDirectoryFileRef);
     CFStringRef stringNameRef = CFURLCopyLastPathComponent(urlRef);
     
-//    CFStringRef appStringRef = CFURLGetString ( appUrlRef );
-
     // do something with the file
     //...
     const CFIndex kCStringSize = 256;
@@ -60,7 +90,7 @@ void loadMeshFromBundle(const char* name, const char* ext)
     CFRelease(stringDirectoryRef);
     CFRelease(stringNameRef);
     
-    meshgroup.load_from_file(temporaryPathCString, temporaryNameCString, true);
+    meshgroup.load_meshes(temporaryPathCString, temporaryNameCString, true);
 }
 
 void loadMeshFromUrl(CFURLRef urlRef)
@@ -85,7 +115,7 @@ void loadMeshFromUrl(CFURLRef urlRef)
     CFRelease(stringDirectoryRef);
     CFRelease(stringNameRef);
     
-    meshgroup.load_from_file(temporaryPathCString, temporaryNameCString, false);
+    meshgroup.load_meshes(temporaryPathCString, temporaryNameCString, false);
 }
 
 

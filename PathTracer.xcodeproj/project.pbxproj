@@ -27,6 +27,12 @@
 		51F7001A209BCA180017E288 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 51F70006209BC3F00017E288 /* Main.storyboard */; };
 		51F7FFBA209BC1C40017E288 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E97FA52017014200D09D13 /* MetalPerformanceShaders.framework */; };
 		51F7FFCD209BC1C60017E288 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51E97FA72017014A00D09D13 /* MetalPerformanceShaders.framework */; };
+		F41FD45825DEBABC000D300D /* DefaultNormalMap.png in Resources */ = {isa = PBXBuildFile; fileRef = F41FD45525DEBABC000D300D /* DefaultNormalMap.png */; };
+		F41FD45925DEBABC000D300D /* DefaultNormalMap.png in Resources */ = {isa = PBXBuildFile; fileRef = F41FD45525DEBABC000D300D /* DefaultNormalMap.png */; };
+		F41FD45A25DEBABC000D300D /* DefaultEmissiveMap.png in Resources */ = {isa = PBXBuildFile; fileRef = F41FD45625DEBABC000D300D /* DefaultEmissiveMap.png */; };
+		F41FD45B25DEBABC000D300D /* DefaultEmissiveMap.png in Resources */ = {isa = PBXBuildFile; fileRef = F41FD45625DEBABC000D300D /* DefaultEmissiveMap.png */; };
+		F41FD45C25DEBABC000D300D /* DefaultDiffuseMap.png in Resources */ = {isa = PBXBuildFile; fileRef = F41FD45725DEBABC000D300D /* DefaultDiffuseMap.png */; };
+		F41FD45D25DEBABC000D300D /* DefaultDiffuseMap.png in Resources */ = {isa = PBXBuildFile; fileRef = F41FD45725DEBABC000D300D /* DefaultDiffuseMap.png */; };
 		F43FA2BA25D17EB700E64904 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F43FA2B925D17EB700E64904 /* Foundation.framework */; };
 		F45A5B832524DF47004463C5 /* AAPLImage.m in Sources */ = {isa = PBXBuildFile; fileRef = F45A5B812524DF47004463C5 /* AAPLImage.m */; };
 		F45A5B872524E033004463C5 /* image.tga in Resources */ = {isa = PBXBuildFile; fileRef = F45A5B862524E033004463C5 /* image.tga */; };
@@ -148,6 +154,9 @@
 		51F7FFFF209BC3E90017E288 /* GameViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
 		78F3A0E078F4118000000001 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
 		7B1474507B1471A000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		F41FD45525DEBABC000D300D /* DefaultNormalMap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DefaultNormalMap.png; sourceTree = "<group>"; };
+		F41FD45625DEBABC000D300D /* DefaultEmissiveMap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DefaultEmissiveMap.png; sourceTree = "<group>"; };
+		F41FD45725DEBABC000D300D /* DefaultDiffuseMap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DefaultDiffuseMap.png; sourceTree = "<group>"; };
 		F43FA2B925D17EB700E64904 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F45A5B812524DF47004463C5 /* AAPLImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAPLImage.m; sourceTree = "<group>"; };
 		F45A5B822524DF47004463C5 /* AAPLImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAPLImage.h; sourceTree = "<group>"; };
@@ -324,6 +333,9 @@
 		F489C5B92550324A00F360B6 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				F41FD45725DEBABC000D300D /* DefaultDiffuseMap.png */,
+				F41FD45625DEBABC000D300D /* DefaultEmissiveMap.png */,
+				F41FD45525DEBABC000D300D /* DefaultNormalMap.png */,
 				F489C5D22550332E00F360B6 /* cube */,
 				F489C5BA2550332E00F360B6 /* tiki_treasure */,
 			);
@@ -482,6 +494,7 @@
 				F489C6072550332E00F360B6 /* Cube_MetallicRoughness.png in Resources */,
 				F489C5ED2550332E00F360B6 /* sand_caustics_baseColor.png in Resources */,
 				F489C5F32550332E00F360B6 /* sails_baseColor.png in Resources */,
+				F41FD45C25DEBABC000D300D /* DefaultDiffuseMap.png in Resources */,
 				F4A339D5252B7EFD0035C856 /* greenConcrete.tga in Resources */,
 				F489C5EF2550332E00F360B6 /* rock_tile_baseColor.png in Resources */,
 				F489C5E12550332E00F360B6 /* material_baseColor.png in Resources */,
@@ -493,10 +506,12 @@
 				F489C5F12550332E00F360B6 /* foliage_02_baseColor.png in Resources */,
 				3E9448D620BC6BF0001DD43A /* README.md in Resources */,
 				F489C6092550332E00F360B6 /* Cube.gltf in Resources */,
+				F41FD45825DEBABC000D300D /* DefaultNormalMap.png in Resources */,
 				F489C5FD2550332E00F360B6 /* water_light_baseColor.png in Resources */,
 				51F70013209BCA010017E288 /* LaunchScreen.storyboard in Resources */,
 				F489C5FF2550332E00F360B6 /* scene.gltf in Resources */,
 				F489C5D72550332E00F360B6 /* foliage_emissive.png in Resources */,
+				F41FD45A25DEBABC000D300D /* DefaultEmissiveMap.png in Resources */,
 				F45A5B872524E033004463C5 /* image.tga in Resources */,
 				F489C5D92550332E00F360B6 /* sand_tile_baseColor.png in Resources */,
 				F489C5E52550332E00F360B6 /* wood_trims_baseColor.png in Resources */,
@@ -525,7 +540,9 @@
 				F489C5F02550332E00F360B6 /* rock_tile_baseColor.png in Resources */,
 				F4A339C2252B53E30035C856 /* osb.tga in Resources */,
 				F489C5E82550332E00F360B6 /* rocks_unique_baseColor.png in Resources */,
+				F41FD45B25DEBABC000D300D /* DefaultEmissiveMap.png in Resources */,
 				51F7001A209BCA180017E288 /* Main.storyboard in Resources */,
+				F41FD45D25DEBABC000D300D /* DefaultDiffuseMap.png in Resources */,
 				F489C5E62550332E00F360B6 /* wood_trims_baseColor.png in Resources */,
 				F489C5FA2550332E00F360B6 /* emissive_emissive.png in Resources */,
 				F489C5E22550332E00F360B6 /* material_baseColor.png in Resources */,
@@ -538,6 +555,7 @@
 				F489C5E42550332E00F360B6 /* bits_bobs_baseColor.png in Resources */,
 				F489C5F82550332E00F360B6 /* sails_emissive.png in Resources */,
 				F489C5D82550332E00F360B6 /* foliage_emissive.png in Resources */,
+				F41FD45925DEBABC000D300D /* DefaultNormalMap.png in Resources */,
 				F489C5F22550332E00F360B6 /* foliage_02_baseColor.png in Resources */,
 				F489C5F42550332E00F360B6 /* sails_baseColor.png in Resources */,
 				F489C5F62550332E00F360B6 /* foliage_baseColor.png in Resources */,

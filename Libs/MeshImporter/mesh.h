@@ -19,6 +19,15 @@ struct Meshgroup {
 		int x = 0, y = 0, n = 0;
 	};
 
+    static const char* DefaultDiffuseMap;
+    static const char* DefaultNormalMap;
+    static const char* DefaultEmissiveMap;
+
+    static Meshgroup::Texture default_diffuse;
+    static Meshgroup::Texture default_normal;
+    static Meshgroup::Texture default_emissive;
+
+
 	struct Mesh {
 
 //        const char name[128];
@@ -32,7 +41,7 @@ struct Meshgroup {
         int vertex_count;
         int face_count;
         int index_count;
-        unsigned int MaterialIndex;
+//        unsigned int materialIndex;
 
 		Texture diffuse;
 		Texture normal;
@@ -64,17 +73,15 @@ struct Meshgroup {
         void set_shader_uniforms(GLuint shader_programme /*, const mat4& modelMatrix*/, const vec3& ambient_color);
         void render(GLuint shader_programme);
 #endif
-
 		Node* node;
-		
 	};
 
 	std::vector<Mesh> meshes;
 	std::vector<Node> nodes;
 	std::vector<std::string> names;
 
-	static void load_default_textures() ;
-    bool load_from_file(const char* file_path, const char* file_name, bool absolutePath = false, int index = 0) ;
+    static void load_texture(Texture& texture, const char* file_path, const char* file_name, bool absolutePath);
+    bool load_meshes(const char* file_path, const char* file_name, bool absolutePath = false, int index = 0) ;
     
 #ifdef USE_OPENGL
 
@@ -85,4 +92,7 @@ struct Meshgroup {
     void render(GLuint shader_programme);
 #endif
     
+    static void createQuad(Mesh& mesh);
+    
 };
+
