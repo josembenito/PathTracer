@@ -160,6 +160,14 @@ void Meshgroup::load_texture(Texture& tex, const char* file_path, const char* fi
 
 }
 
+vec3 getTriangleNormal(vec3 v0, vec3 v1, vec3 v2) {
+    vec3 e1 = normalise(v1 - v0);
+    vec3 e2 = normalise(v2 - v0);
+    
+    return cross(e1, e2);
+}
+
+
 void Meshgroup::createQuad(Mesh& mesh) {
         
     mesh.vertex_count = 4;
@@ -179,25 +187,23 @@ void Meshgroup::createQuad(Mesh& mesh) {
 
 
     vec3 cubeVertices[] = {
-        vec3( 0.5f, 0.0f, -0.5f),
-        vec3( 0.5f,  0.f, 0.5f),
-        vec3(-0.5f,  0.f, 0.5f),
-        vec3(-0.5f, 0.0f, -0.5f),
+        vec3(-0.5f,  0.5f, 0.f),
+        vec3( 0.5f, -0.5f, 0.f),
+        vec3( 0.5f,  0.5f, 0.f),
+        vec3(-0.5f, -0.5f, 0.f),
     };
     vec2 uvs[] = {
-        vec2(1,0),
-        vec2(1,1),
-        vec2(0,1),
         vec2(0,0),
+        vec2(1,1),
+        vec2(1,0),
+        vec2(0,1),
+        
     };
     for (int i=0;i<mesh.vertex_count;++i) {
         mesh.vp[i * 3] = cubeVertices[i].x;
         mesh.vp[i * 3 + 1] = cubeVertices[i].y;
         mesh.vp[i * 3 + 2] = cubeVertices[i].z;
 
-        mesh.vn[i * 3] = 0;
-        mesh.vn[i * 3 + 1] = 1;
-        mesh.vn[i * 3 + 2] = 0;
         
         for (int j=0;j<uvs_channels;++j) {
             mesh.uvs[j][i*2] = uvs[i].x;
@@ -205,12 +211,25 @@ void Meshgroup::createQuad(Mesh& mesh) {
         }
     }
     
-    uint32_t vertexIndices[6] = {0,1,2,0,2,3};
+    uint32_t vertexIndices[6] = {0,1,2,0,3,1};
     
     for (int i=0;i<mesh.face_count;++i) {
-        mesh.faces_indices[i * 3] = vertexIndices[i*3];
-        mesh.faces_indices[i * 3 + 1] = vertexIndices[i*3+1];;
-        mesh.faces_indices[i * 3 + 2] = vertexIndices[i*3+2];;
+        uint32_t a = vertexIndices[i*3 + 0];
+        uint32_t b = vertexIndices[i*3 + 1];
+        uint32_t c = vertexIndices[i*3 + 2];
+        mesh.faces_indices[i * 3] = a;
+        mesh.faces_indices[i * 3 + 1] = b;
+        mesh.faces_indices[i * 3 + 2] = c;
+        
+        vec3 v0 = cubeVertices[a];
+        vec3 v1 = cubeVertices[b];
+        vec3 v2 = cubeVertices[c];
+    
+        vec3 normal = getTriangleNormal(v0,v1,v2);
+        
+        mesh.vn[a] =  normal.x;
+        mesh.vn[b] =  normal.y;
+        mesh.vn[c] =  normal.z;
     }
     //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
 
@@ -218,11 +237,29 @@ void Meshgroup::createQuad(Mesh& mesh) {
     mesh.diffuse = default_diffuse;
     mesh.normal = default_normal;
     mesh.emissive = default_emissive;
-
-    mesh.diffuse_base_color = vec3(1,1,1);
 }
 
-bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool absolutePath, int index ) {
+size_t Meshgroup::get_node_size(const char* file_path, const char* file_name, bool absolutePath)
+{
+    size_t ret = 0;
+    std::string filePathName = std::string(file_path) + std::string(file_name);
+    const aiScene* scene = aiImportFile(filePathName.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace| aiProcess_GenSmoothNormals /*| aiProcess_FlipUVs*/);
+    if (scene->mMetaData) {
+        for (int i=0;i<scene->mMetaData->mNumProperties;++i) {
+            aiString property;
+            printf ("Metadata property:%s\n", scene->mMetaData->mKeys[i].C_Str());
+        }
+    }
+    aiNode* aiRootNode = scene->mRootNode;
+    
+    ret = getNodeHierarchySize(aiRootNode);
+    
+    aiReleaseImport(scene);
+    return ret;
+}
+
+bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool absolutePath, int index )
+{
     std::string filePathName = std::string(file_path) + std::string(file_name);
 	const aiScene* scene = aiImportFile(filePathName.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace| aiProcess_GenSmoothNormals /*| aiProcess_FlipUVs*/);
     if (scene->mMetaData) {
@@ -433,9 +470,11 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
 		}
 	}
 
+
+    // node list should be resized with appropriate mesh size + other node size before getting here
 	size_t nodeSize = getNodeHierarchySize(aiRootNode);
-	nodes.resize(nodeSize);
-	names.resize(nodeSize);
+    assert(nodes.size() >= nodeSize);
+    
 	for (size_t i = 0; i < nodeSize; ++i) {
 		nodes[i].init();
 	}
@@ -447,6 +486,11 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
 	printf("mesh loaded\n");
 
 	return true;
+}
+
+void Meshgroup::resizeNodes(size_t size) {
+    nodes.resize(size);
+    names.resize(size);
 }
 
 #ifdef USE_OPENGL

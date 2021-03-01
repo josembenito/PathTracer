@@ -67,7 +67,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     unsigned int _frameIndex;
     
-    vec3 _cameraPosition;
+    
+    Node* _lightNode;
     vec3 _lightPosition;
     float _lightIntensity;
 
@@ -75,6 +76,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     vec3 _rootPosition;
     bool _makeFrameDirty;
     Node _rootSceneNode;
+    Node _cameraNode;
     float _scaleValue;
     
     bool _isSceneInitialized;
@@ -95,6 +97,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
         _sem = dispatch_semaphore_create(maxFramesInFlight);
         
+        _lightNode = nullptr;
         _lightPosition = vec3(0,0,0);
         _rootPosition = vec3(0,0,0);
         _scaleValue = 1.f;
@@ -104,9 +107,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 //        [self createScene];
 //        [self createBuffers];
 //        [self createIntersector];
-        _cameraPosition = vec3(0,0,1.0f);
         
-        _rotX = 0; _rotY = 0;
+        _rotX = 0; _rotY = M_PI;
         
         _makeFrameDirty = false;
         
@@ -206,59 +208,63 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     
     _lightIntensity = 4.f;
     _lightPosition.y = 5.0f;
-    _cameraPosition = vec3(0,0,10.0f);
+    
+    
+    _scaleValue = 0.001f;
+    _rootPosition = vec3(0.0f, 0.0, 0.0f);
+    _rootSceneNode.init();
+
+    _rootSceneNode.rotation = quat_from_axis_deg(0, 0, 1, 0);
+    _rootSceneNode.position = _rootPosition;
+    
+    _cameraNode.init();
+    _cameraNode.position = vec3(0,0,10);
+    _cameraNode.rotation = quat_from_axis_rad(_rotY, 0, 1, 0)*quat_from_axis_rad(_rotX, 1, 0, 0);
+    _rootSceneNode.addChild(_cameraNode);
     
     loadTextureFromBundle(Meshgroup::default_diffuse, "DefaultDiffuseMap", "png");
     loadTextureFromBundle(Meshgroup::default_normal, "DefaultNormalMap", "png");
     loadTextureFromBundle(Meshgroup::default_emissive, "DefaultEmissiveMap", "png");
+
+    size_t meshNodeSize = getMeshNodesFromUrl((__bridge CFURLRef) fileUrl);
+    size_t objectSize = 1; // add one light
+    meshgroup.resizeNodes(meshNodeSize+objectSize);
     
-    _scaleValue = 0.001f;
-    _rootPosition = vec3(0.0f, 10.0, 0.0f);
-    
-    _rootSceneNode.init();
-
-//    _rootSceneNode.scale = vec3(_scaleValue, _scaleValue, _scaleValue);
-    _rootSceneNode.rotation = quat_from_axis_deg(45, 0, 1, 0);
-    _rootSceneNode.position = _rootPosition;
-
-
     loadMeshFromUrl((__bridge CFURLRef) fileUrl);
     meshgroup.nodes[0].scale = vec3(_scaleValue, _scaleValue, _scaleValue);
+    meshgroup.nodes[0].position = vec3(0,10.f,0);
     _rootSceneNode.addChild(meshgroup.nodes[0]);
-
+    
     
     // add light
-    // TODO: cannot add node to meshgroup nodes as pointers in mesh are relative to vector and
-    // either make nodes a list of dynamic pointers or some other trick such as
-    // separate nodes from meshes, and add indices to mesh instead of pointers
-    // make another meshgroup
-   
-//    meshgroup.meshes.push_back( Meshgroup::Mesh() );
-//    Meshgroup::Mesh& lightMesh = meshgroup.meshes[meshgroup.meshes.size()-1];
-//
-//    Meshgroup::createQuad(lightMesh);
-//
-//    meshgroup.names.push_back("light01");
-//    meshgroup.nodes.push_back(Node());
-//    Node& node = meshgroup.nodes[meshgroup.nodes.size()-1];
-//
-//    node.init();
-//
-//    node.scale = vec3(1, 1, 1);
-//    node.rotation = quat_from_axis_deg(0, 0, 1, 0);
-//    node.position = vec3(0,1,0);
-//
-//    lightMesh.node = &node;
-//
-//    _rootSceneNode.addChild(node);
+    meshgroup.meshes.push_back( Meshgroup::Mesh() );
+    Meshgroup::Mesh& lightMesh = meshgroup.meshes[meshgroup.meshes.size()-1];
 
+    Meshgroup::createQuad(lightMesh);
+    
+    // set emissive color length above 1 to mask as light
+    lightMesh.emissive_base_color = vec3(2,2,2);
+
+    size_t last = meshgroup.nodes.size()-1;
+    Node& lightNode = meshgroup.nodes[last];
+    meshgroup.names[last] = "light01";
+
+    lightNode.init();
+
+    lightNode.scale = vec3(1, 1, 1);
+    lightNode.rotation = quat_from_axis_deg(90, 1, 0, 0);
+    lightNode.position = vec3(0,10,0);
+
+    lightMesh.node = &lightNode;
+    _lightNode = &lightNode;
+
+    _rootSceneNode.addChild(lightNode);
 
     // TODO: add light mask to lightmesh, or make emissive
     
     // Light source
-    float4x4 transform = matrix4x4_translation(_lightPosition.x,_lightPosition.y, _lightPosition.z)* matrix4x4_scale(1.f, 1.f, 1.f);
-    createCube(FACE_MASK_NEGATIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
-    
+//    float4x4 transform = matrix4x4_translation(_lightPosition.x,_lightPosition.y, _lightPosition.z)* matrix4x4_rotation(3.14f*0.5,vector3(0.f,1.f,0.f))* matrix4x4_scale(1.f, 1.f, 1.f);
+//    createCube(FACE_MASK_POSITIVE_Z, vector3(1.0f, 1.0f, 1.0f), transform, false, TRIANGLE_MASK_LIGHT, ImageMaterial);
     
     _rootSceneNode.updateHierarchy();
     
@@ -268,50 +274,6 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _isSceneInitialized =true;
 }
 
-- (void)createScene
-{
-   _lightPosition.y = 1.95f;
-#ifdef RENDER_MESH
-//    _scaleValue = 0.25f;
-//    loadMesh("Cube","gltf");
-    _scaleValue = 0.0001f;
-    
-
-   _lightPosition.y = 2.5f;
-    _rootPosition = vec3(0.0f, 2.6, 0.0f);
-    loadMeshFromBundle("scene","gltf");
-
-#endif
-    
-    
-    float4x4 transform = matrix4x4_translation(_lightPosition.x,_lightPosition.y, _lightPosition.z) * matrix4x4_scale(0.5f, 0.5f, 0.5f);
-    
-    // Light source
-    createCube(FACE_MASK_NEGATIVE_Y, vector3(1.0f, 1.0f, 1.0f), transform, true, TRIANGLE_MASK_LIGHT, ImageMaterial);
-    
-     transform = matrix4x4_translation(0.0f, 1.0f, 0.0f) * matrix4x4_scale(2.f, 2.f, 2.f);
-       // Top, bottom, and back walls
-//    createCube(FACE_MASK_NEGATIVE_Y | FACE_MASK_POSITIVE_Y | FACE_MASK_NEGATIVE_Z, vector3(0.725f, 0.71f, 0.68f), transform, true, TRIANGLE_MASK_GEOMETRY, ConcreteMaterial);
-
-    // Left wall
-    createCube(FACE_MASK_NEGATIVE_X, vector3(0.63f, 0.065f, 0.05f), transform, true, TRIANGLE_MASK_GEOMETRY, RedConcreteMaterial);
-
-    // Right wall
-//    createCube(FACE_MASK_POSITIVE_X, vector3(0.14f, 0.45f, 0.091f), transform, true, TRIANGLE_MASK_GEOMETRY, GreenConcreteMaterial);
-				
-//    transform = matrix4x4_translation(-0.335f, 0.6f, -0.29f) * matrix4x4_rotation(0.3f, vector3(0.0f, 1.0f, 0.0f)) * matrix4x4_scale(0.6f, 1.2f, 0.6f);
-
-    // Tall box
-//    createCube(FACE_MASK_ALL, vector3(0.725f, 0.71f, 0.68f), transform, false, TRIANGLE_MASK_GEOMETRY, PlywoodMaterial);
-
-//    transform = matrix4x4_translation(0.3275f, 0.3f, 0.3725f) * matrix4x4_rotation(-0.3f, vector3(0.0f, 1.0f, 0.0f)) * matrix4x4_scale(0.6f, 0.6f, 0.6f);
-
-    // Short box
-//    createCube(FACE_MASK_ALL, vector3(0.725f, 0.71f, 0.68f), transform, false, TRIANGLE_MASK_GEOMETRY, PlywoodMaterial);
-
-    
-    
-}
 
 - (void)createBuffers
 {
@@ -479,7 +441,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         for (int i=0;i<meshgroup.meshes.size();++i) {
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
             for (int j=0; j < meshTriangleSize; ++j) {
-                *bufferOffset = TRIANGLE_MASK_GEOMETRY;
+                *bufferOffset = length(meshgroup.meshes[i].emissive_base_color) > 1 ? TRIANGLE_MASK_LIGHT : TRIANGLE_MASK_GEOMETRY;
                 ++bufferOffset;
             }
         }
@@ -491,7 +453,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         for (int i=0;i<meshgroup.meshes.size();++i) {
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
             for (int j=0; j < meshTriangleSize; ++j) {
-                *bufferOffset = MaterialSize+i;;
+                *bufferOffset = MaterialSize+i;
                 ++bufferOffset;
             }
         }
@@ -716,36 +678,42 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
 }
 
-- (void)updateUniforms {
-    auto transformVector = [](const matrix_float4x4& A, const float3& vector)
-    {
-        float3 v = vector;
-        float4 v4 = vector4(v.x, v.y, v.z, 1.0f);
-        float4 vt = A * v4;
-        return vector3(vt.x,vt.y,vt.z);
-    };
+- (void)updateUniforms
+{
+//    auto transformVector = [](const matrix_float4x4& A, const float3& vector)
+//    {
+//        float3 v = vector;
+//        float4 v4 = vector4(v.x, v.y, v.z, 1.0f);
+//        float4 vt = A * v4;
+//        return vector3(vt.x,vt.y,vt.z);
+//    };
 
     // Update this frame's uniforms
     _uniformBufferOffset = alignedUniformsSize * _uniformBufferIndex;
 
     Uniforms *uniforms = (Uniforms *)((char *)_uniformBuffer.contents + _uniformBufferOffset);
 
-    uniforms->camera.position = vector3(_cameraPosition.x, _cameraPosition.y, _cameraPosition.z);
+    const mat4& cameraTransform = _cameraNode.worldMatrix;
+    vec4 cameraRight = cameraTransform.getColumn(0);
+    vec4 cameraUp = cameraTransform.getColumn(1);
+    vec4 cameraForward = cameraTransform.getColumn(2);
+    vec4 cameraPosition = cameraTransform.getColumn(3);
 
-//    uniforms->camera.forward = vector3(0.0f, 0.0f, -1.0f);
-//    uniforms->camera.right = vector3(1.0f, 0.0f, 0.0f);
-//    uniforms->camera.up = vector3(0.0f, 1.0f, 0.0f);
+    uniforms->camera.position = vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+    uniforms->camera.forward = vector3(cameraForward.x, cameraForward.y, cameraForward.z);
+    uniforms->camera.right = vector3(cameraRight.x, cameraRight.y, cameraRight.z);
+    uniforms->camera.up = vector3(cameraUp.x, cameraUp.y, cameraUp.z);
 
-    matrix_float4x4 cameraRotation = matrix4x4_rotation(_rotY, vector3(0.0f, 1.0f, 0.0f))*matrix4x4_rotation(_rotX, vector3(1.0f, 0.0f, 0.0f));
+    const mat4& lightTransform = (*_lightNode).worldMatrix;
+    vec4 lightRight = lightTransform.getColumn(0);
+    vec4 lightUp = lightTransform.getColumn(1);
+    vec4 lightForward = lightTransform.getColumn(2);
+    vec4 lightPosition = lightTransform.getColumn(3);
     
-    uniforms->camera.forward = transformVector(cameraRotation, vector3(0.0f, 0.0f,-1.0f));
-    uniforms->camera.right = transformVector(cameraRotation, vector3(1.0f, 0.0f,0.0f));
-    uniforms->camera.up = transformVector(cameraRotation, vector3(0.0f, 1.0f,0.0f));
-    
-    uniforms->light.position = vector3(_lightPosition.x,_lightPosition.y, _lightPosition.z);
-    uniforms->light.forward = vector3(0.0f, -1.0f, 0.0f);
-    uniforms->light.right = vector3(1.f, 0.0f, 0.0f);
-    uniforms->light.up = vector3(0.0f, 0.0f, 1.f);
+    uniforms->light.position = vector3(lightPosition.x,lightPosition.y, lightPosition.z);
+    uniforms->light.forward = vector3(lightForward.x, lightForward.y, lightForward.z);
+    uniforms->light.right = vector3(lightRight.x, lightRight.y, lightRight.z);
+    uniforms->light.up = vector3(lightUp.x, lightUp.y, lightUp.z);
 
     uniforms->light.color = _lightIntensity*vector3(1.0f, 1.0f, 1.0f);
     // frame index is used in the accumulation phase to decide what to mix from previous
@@ -950,14 +918,12 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 }
 -(void) moveCameraWithSpeedX:(float)x Y:(float)y Z:(float)z RX:(float)rx RY:(float)ry;
 {
-    _cameraPosition.x += x;
-    _cameraPosition.y += y;
-    _cameraPosition.z += z;
-//    _posX += x;
-//    _posY += y;
-//    _posZ += z;
     _rotX += rx;
     _rotY += ry;
+    
+    _cameraNode.rotation = quat_from_axis_rad(_rotY, 0, 1, 0)*quat_from_axis_rad(_rotX, 1, 0, 0);
+    _cameraNode.position += quat_to_mat4(_cameraNode.rotation)*vec4(x,y,z,1); // move camera in its direction
+    _cameraNode.updateHierarchy();
     
     _makeFrameDirty = true;
 }

@@ -48,6 +48,7 @@ struct Meshgroup {
         Texture emissive;
 
         vec3 diffuse_base_color;
+        vec3 emissive_base_color;
         
 #ifdef USE_OPENGL
 		GLuint vao;
@@ -79,9 +80,12 @@ struct Meshgroup {
 	std::vector<Mesh> meshes;
 	std::vector<Node> nodes;
 	std::vector<std::string> names;
-
+    
+public:
     static void load_texture(Texture& texture, const char* file_path, const char* file_name, bool absolutePath);
-    bool load_meshes(const char* file_path, const char* file_name, bool absolutePath = false, int index = 0) ;
+    size_t get_node_size(const char* file_path, const char* file_name, bool absolutePath);
+    bool load_meshes(const char* file_path, const char* file_name, bool absolutePath = false, int index = 0);
+    void resizeNodes(size_t size);
     
 #ifdef USE_OPENGL
 
@@ -94,5 +98,7 @@ struct Meshgroup {
     
     static void createQuad(Mesh& mesh);
     
+    
 };
+
 

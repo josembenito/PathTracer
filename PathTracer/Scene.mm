@@ -93,29 +93,54 @@ void loadMeshFromBundle(const char* name, const char* ext)
     meshgroup.load_meshes(temporaryPathCString, temporaryNameCString, true);
 }
 
-void loadMeshFromUrl(CFURLRef urlRef)
-{
+void getAbsoluteFilePathAndName(CFURLRef urlRef, char* path, char* name, size_t size) {
     CFURLRef urlDirectoryFileRef = CFURLCreateCopyDeletingLastPathComponent(NULL, urlRef);
     CFStringRef stringDirectoryRef = CFURLCopyPath(urlDirectoryFileRef);
     CFRelease(urlDirectoryFileRef);
     CFStringRef stringNameRef = CFURLCopyLastPathComponent(urlRef);
     
-//    CFStringRef appStringRef = CFURLGetString ( appUrlRef );
-
-    // do something with the file
-    //...
-    const CFIndex kCStringSize = 256;
-    char temporaryNameCString[kCStringSize];
-    bzero(temporaryNameCString,kCStringSize);
-    char temporaryPathCString[kCStringSize];
-    bzero(temporaryPathCString,kCStringSize);
-    CFStringGetCString(stringNameRef, temporaryNameCString, kCStringSize, kCFStringEncodingUTF8);
-    CFStringGetCString(stringDirectoryRef, temporaryPathCString, kCStringSize, kCFStringEncodingUTF8);
+    bzero(path, size);
+    bzero(name, size);
+    CFStringGetCString(stringNameRef, name, size, kCFStringEncodingUTF8);
+    CFStringGetCString(stringDirectoryRef, path, size, kCFStringEncodingUTF8);
       
     CFRelease(stringDirectoryRef);
     CFRelease(stringNameRef);
+}
+
+void loadMeshFromUrl(CFURLRef urlRef)
+{
     
-    meshgroup.load_meshes(temporaryPathCString, temporaryNameCString, false);
+//    CFURLRef urlDirectoryFileRef = CFURLCreateCopyDeletingLastPathComponent(NULL, urlRef);
+//    CFStringRef stringDirectoryRef = CFURLCopyPath(urlDirectoryFileRef);
+//    CFRelease(urlDirectoryFileRef);
+//    CFStringRef stringNameRef = CFURLCopyLastPathComponent(urlRef);
+//
+//    const CFIndex kCStringSize = 256;
+//    char temporaryNameCString[kCStringSize];
+//    bzero(temporaryNameCString,kCStringSize);
+//    char temporaryPathCString[kCStringSize];
+//    bzero(temporaryPathCString,kCStringSize);
+//    CFStringGetCString(stringNameRef, temporaryNameCString, kCStringSize, kCFStringEncodingUTF8);
+//    CFStringGetCString(stringDirectoryRef, temporaryPathCString, kCStringSize, kCFStringEncodingUTF8);
+//
+//    CFRelease(stringDirectoryRef);
+//    CFRelease(stringNameRef);
+    
+    const size_t size = 256;
+    char fileName[size];
+    char filePath[size];
+    getAbsoluteFilePathAndName(urlRef, filePath, fileName, size);
+    meshgroup.load_meshes(filePath, fileName, false);
+}
+
+size_t getMeshNodesFromUrl(CFURLRef urlRef)
+{
+    const size_t size = 256;
+    char fileName[size];
+    char filePath[size];
+    getAbsoluteFilePathAndName(urlRef, filePath, fileName, size);
+    return meshgroup.get_node_size(filePath, fileName, false);
 }
 
 

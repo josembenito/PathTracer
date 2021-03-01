@@ -13,6 +13,7 @@
 - (void) viewWillMoveToWindow:(NSWindow *)newWindow;
 
 - (void)keyUp:(NSEvent *)event;
+- (void)keyDown:(NSEvent *)event;
 - (BOOL)acceptsFirstResponder;
 
 @property (weak, nonatomic) NSViewController* viewController;

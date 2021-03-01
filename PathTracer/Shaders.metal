@@ -211,7 +211,7 @@ inline void sampleAreaLight(constant AreaLight & light,
     float3 samplePosition = light.position; // + light.right * u.x + light.up * u.y;
     
     // Compute vector from sample point on light source to intersection point
-    lightDirection = samplePosition - position;
+    lightDirection = position - samplePosition;
     
     lightDistance = length(lightDirection);
     
@@ -227,7 +227,7 @@ inline void sampleAreaLight(constant AreaLight & light,
     //lightColor *= (inverseLightDistance * inverseLightDistance);
     
     // uncomment if light area should be one sided (only forward)
-    lightColor *= saturate(dot(-lightDirection, light.forward));
+    lightColor *= saturate(dot(lightDirection, light.forward));
 }
 
 // Aligns a direction on the unit hemisphere such that the hemisphere's "up" direction
@@ -312,7 +312,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                 
                 // Scale the light color by the cosine of the angle between the light direction and
                 // surface normal
-                lightColor *= saturate(dot(surfaceNormal, -lightDirection));
+                lightColor *= saturate(dot(surfaceNormal, lightDirection));
                 //float2 uvs = interpolateVertexAttribute(vertexCoords,intersection);
                 float2 uvs = interpolateVertexAttributeIndexed(vertexCoords,intersection, indices);
 
@@ -379,7 +379,6 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
             }
         }
         else {
-//            dstTex.write(float4(0.4f,0.4f,0.6f, 1.0f), tid);
             // The ray missed the scene, so terminate the ray's path
             ray.maxDistance = -1.0f;
             shadowRay.maxDistance = -1.0f;

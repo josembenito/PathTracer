@@ -7,6 +7,7 @@ struct Node {
 	Node* parent;
 	std::vector<Node*> children;
 
+    // local
 	vec3 position;
 	versor rotation;
 	vec3 scale;
@@ -14,6 +15,7 @@ struct Node {
 	mat4 localMatrix;
 	mat4 localInverseMatrix;
 
+    // world
 	mat4 worldMatrix;
 	mat4 worldInverseMatrix;
 

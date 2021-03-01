@@ -41,6 +41,7 @@ void createCube(unsigned int faceMask,
 
 void loadMeshFromBundle(const char* name, const char* ext = "gltf");
 void loadTextureFromBundle(Meshgroup::Texture &texture, const char* name, const char* ext);
+size_t getMeshNodesFromUrl(CFURLRef urlRef);
 void loadMeshFromUrl(CFURLRef filePath);
 
 #endif /* Scene_h */
