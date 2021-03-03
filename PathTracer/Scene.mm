@@ -134,13 +134,33 @@ void loadMeshFromUrl(CFURLRef urlRef)
     meshgroup.load_meshes(filePath, fileName, false);
 }
 
-size_t getMeshNodesFromUrl(CFURLRef urlRef)
+size_t getNumNodesInScene(CFURLRef urlRef)
 {
     const size_t size = 256;
     char fileName[size];
     char filePath[size];
     getAbsoluteFilePathAndName(urlRef, filePath, fileName, size);
     return meshgroup.get_node_size(filePath, fileName, false);
+}
+
+
+void getNumMaterialsInScene(CFURLRef urlRef, size_t& numMaterials, size_t& numTextures)
+{
+    const size_t size = 256;
+    char fileName[size];
+    char filePath[size];
+    getAbsoluteFilePathAndName(urlRef, filePath, fileName, size);
+    return meshgroup.get_material_size(filePath, fileName, false, numMaterials, numTextures);
+
+}
+size_t getNumMeshesInScene(CFURLRef urlRef)
+{
+    const size_t size = 256;
+    char fileName[size];
+    char filePath[size];
+    getAbsoluteFilePathAndName(urlRef, filePath, fileName, size);
+    return meshgroup.get_mesh_size(filePath, fileName, false);
+
 }
 
 

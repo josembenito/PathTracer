@@ -226,9 +226,18 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     loadTextureFromBundle(Meshgroup::default_normal, "DefaultNormalMap", "png");
     loadTextureFromBundle(Meshgroup::default_emissive, "DefaultEmissiveMap", "png");
 
-    size_t meshNodeSize = getMeshNodesFromUrl((__bridge CFURLRef) fileUrl);
     size_t objectSize = 1; // add one light
-    meshgroup.resizeNodes(meshNodeSize+objectSize);
+    size_t nodeSize = getNumNodesInScene((__bridge CFURLRef) fileUrl);
+    meshgroup.resizeNodes(nodeSize+objectSize);
+    
+    size_t textureSize = 0;
+    size_t materialSize = 0;
+     getNumMaterialsInScene((__bridge CFURLRef) fileUrl, materialSize, textureSize);
+    meshgroup.resizeMaterials(materialSize+objectSize);
+    meshgroup.resizeTextures(textureSize);
+    
+    size_t meshSize = getNumMeshesInScene((__bridge CFURLRef) fileUrl);
+    meshgroup.resizeMeshes(meshSize+objectSize);
     
     loadMeshFromUrl((__bridge CFURLRef) fileUrl);
     meshgroup.nodes[0].scale = vec3(_scaleValue, _scaleValue, _scaleValue);
@@ -236,18 +245,24 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _rootSceneNode.addChild(meshgroup.nodes[0]);
     
     
-    // add light
-    meshgroup.meshes.push_back( Meshgroup::Mesh() );
-    Meshgroup::Mesh& lightMesh = meshgroup.meshes[meshgroup.meshes.size()-1];
-
+    // add light info
+    size_t lastMesh = meshgroup.meshes.size()-1;
+    Meshgroup::Mesh& lightMesh = meshgroup.meshes[lastMesh];
     Meshgroup::createQuad(lightMesh);
     
-    // set emissive color length above 1 to mask as light
-    lightMesh.emissive_base_color = vec3(2,2,2);
+    size_t lastMaterial = meshgroup.materials.size()-1;
+    Meshgroup::Material& lightMaterial = meshgroup.materials[lastMaterial];
+    
 
-    size_t last = meshgroup.nodes.size()-1;
-    Node& lightNode = meshgroup.nodes[last];
-    meshgroup.names[last] = "light01";
+    lightMaterial.diffuse = &Meshgroup::default_diffuse;
+    lightMaterial.normal = &Meshgroup::default_normal;
+    lightMaterial.emissive = &Meshgroup::default_emissive;
+    lightMaterial.emissive_base_color = vec3(2,2,2); // set emissive color length above 1 to mask as light
+
+
+    size_t lastNode = meshgroup.nodes.size()-1;
+    Node& lightNode = meshgroup.nodes[lastNode];
+    meshgroup.names[lastNode] = "light01";
 
     lightNode.init();
 
@@ -256,6 +271,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     lightNode.position = vec3(0,10,0);
 
     lightMesh.node = &lightNode;
+    lightMesh.material = &lightMaterial;
+    
     _lightNode = &lightNode;
 
     _rootSceneNode.addChild(lightNode);
@@ -439,9 +456,11 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         memcpy(bufferOffset, &masks[0], masks.size() * sizeof(uint32_t));
         bufferOffset+=masks.size();
         for (int i=0;i<meshgroup.meshes.size();++i) {
+            assert(meshgroup.meshes[i].material);
+            Meshgroup::Material& material = *meshgroup.meshes[i].material;
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
             for (int j=0; j < meshTriangleSize; ++j) {
-                *bufferOffset = length(meshgroup.meshes[i].emissive_base_color) > 1 ? TRIANGLE_MASK_LIGHT : TRIANGLE_MASK_GEOMETRY;
+                *bufferOffset = length(material.emissive_base_color) > 1 ? TRIANGLE_MASK_LIGHT : TRIANGLE_MASK_GEOMETRY;
                 ++bufferOffset;
             }
         }
@@ -515,13 +534,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     [_indexBuffer didModifyRange:NSMakeRange(0, _indexBuffer.length)];
 #endif
     
-    
     NSURL *imageFileLocation = nullptr;
-//    ImageMaterial,
-//    ConcreteMaterial,
-//    RedConcreteMaterial,
-//    GreenConcreteMaterial,
-//    PlywoodMaterial,
     NSArray* textureFileNames = [[NSArray alloc] initWithObjects:@"image",@"concrete",@"redConcrete",@"greenConcrete", @"osb", nil];
     assert(textureFileNames.count >= MaterialSize);
     
@@ -533,7 +546,11 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     
     assert (MaterialSize + meshgroup.meshes.size() < MaxMaterialSize);
     for (int i=0;i<meshgroup.meshes.size();++i) {
-        [textures addObject:[self createAndLoadTextureUsingTexture:meshgroup.meshes[i].diffuse]];
+        assert(meshgroup.meshes[i].material);
+        Meshgroup::Material& material = *meshgroup.meshes[i].material;
+        assert(material.diffuse);
+        Meshgroup::Texture& texture = *material.diffuse;
+        [textures addObject:[self createAndLoadTextureUsingTexture:texture]];
     }
     _colorTexture = [textures copy];
     _frameIndex = 0;

@@ -92,11 +92,11 @@ Implementation for our macOS view controller
             ret = true;
         }
         if( [event keyCode] == 125) {
-            z=moveLength;
+            z=-moveLength;
             ret = true;
         }
         if( [event keyCode] == 126) {
-            z=-moveLength;
+            z=moveLength;
             ret = true;
         }
         if( [event keyCode] == 116) {

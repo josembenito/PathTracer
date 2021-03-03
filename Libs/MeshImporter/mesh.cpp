@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <map>
+#include <set>
 #include <assert.h>
 #include <assimp/cimport.h>			// C importer
 #include <assimp/postprocess.h> // various extra operations
@@ -13,6 +15,7 @@
 
 #include "maths_funcs.h"
 #include "gl_utils.h"
+
 
 
 const char* Meshgroup::DefaultDiffuseMap = "DefaultDiffuseMap.png";
@@ -233,10 +236,61 @@ void Meshgroup::createQuad(Mesh& mesh) {
     }
     //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
 
-    // WARNING: careful not to delete these!
-    mesh.diffuse = default_diffuse;
-    mesh.normal = default_normal;
-    mesh.emissive = default_emissive;
+}
+
+size_t Meshgroup::get_mesh_size(const char* file_path, const char* file_name, bool absolutePath)
+{
+    size_t ret = 0;
+    std::string filePathName = std::string(file_path) + std::string(file_name);
+    const aiScene* scene = aiImportFile(filePathName.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace| aiProcess_GenSmoothNormals /*| aiProcess_FlipUVs*/);
+    ret = scene->mNumMeshes;
+    aiReleaseImport(scene);
+    return ret;
+}
+
+void Meshgroup::get_material_size(const char* file_path, const char* file_name, bool absolutePath, size_t& materialSize, size_t& textureSize)
+{
+    std::string filePathName = std::string(file_path) + std::string(file_name);
+    const aiScene* scene = aiImportFile(filePathName.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace| aiProcess_GenSmoothNormals /*| aiProcess_FlipUVs*/);
+    materialSize = scene->mNumMaterials;
+
+    std::set<std::string> textureFilenames;
+    for (unsigned m = 0; m < scene->mNumMaterials; ++m) {
+        aiMaterial* aimaterial = scene->mMaterials[m];
+        
+        aiString path;
+        aiTextureMapping mapping;
+        unsigned int uvindex;
+        {
+            unsigned count = (*aimaterial).GetTextureCount(aiTextureType_DIFFUSE);
+            if (count) {
+                (*aimaterial).GetTexture(aiTextureType_DIFFUSE, 0, &path, &mapping, &uvindex);
+                if (path.length) {
+                    textureFilenames.insert(path.C_Str());
+                }
+            }
+        }
+        {
+            unsigned count = (*aimaterial).GetTextureCount(aiTextureType_NORMALS);
+            if (count) {
+                (*aimaterial).GetTexture(aiTextureType_NORMALS, 0, &path);
+                if (path.length) {
+                    textureFilenames.insert(path.C_Str());
+                }
+            }
+        }
+        {
+            unsigned count = (*aimaterial).GetTextureCount(aiTextureType_EMISSIVE);
+            if (count) {
+                (*aimaterial).GetTexture(aiTextureType_EMISSIVE, 0, &path);
+                if (path.length) {
+                    textureFilenames.insert(path.C_Str());
+                }
+            }
+        }
+    }
+    textureSize = textureFilenames.size();
+    aiReleaseImport(scene);
 }
 
 size_t Meshgroup::get_node_size(const char* file_path, const char* file_name, bool absolutePath)
@@ -281,11 +335,84 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
 	printf("  %i materials\n", scene->mNumMaterials);
 	printf("  %i meshes\n", scene->mNumMeshes);
 	printf("  %i textures\n", scene->mNumTextures);
-
-	// get first mesh only
-	meshes.resize(scene->mNumMeshes);
-	for (unsigned m = 0; m < meshes.size(); ++m) {
+    
+    
+    std::map<std::string, Material*> nameToMaterial;
+    std::map<std::string, Texture*> filenameToTextures;
+    
+    auto loadTexture = [&](aiMaterial* aimaterial, aiTextureType textureType, size_t& loadedTextures) {
+        Texture* ret = nullptr;
+        aiString path;
+        aiTextureMapping mapping;
+        unsigned int uvindex;
+        unsigned count = (*aimaterial).GetTextureCount(textureType);
+        if (count) {
+            (*aimaterial).GetTexture(textureType, 0, &path, &mapping, &uvindex);
+            if (path.length) {
+                ret = filenameToTextures[path.C_Str()];
+                if (!ret) {
+                    assert(textures.size() > loadedTextures);
+                    Texture& texture = textures[loadedTextures];
+                    load_texture(texture, file_path, path.C_Str(), absolutePath);
+                    ret = &texture;
+                    filenameToTextures.insert(std::make_pair(path.C_Str(), ret));
+                    ++loadedTextures;
+                }
+                assert(ret);
+            }
+        }
+        return ret;
+    };
+    
+    size_t loadedTextures = 0;
+    assert(materials.size() >= scene->mNumMaterials);
+    for (unsigned m = 0; m < scene->mNumMaterials; ++m) {
+        
+        Material& material = materials[m];
+        aiMaterial* aimaterial = scene->mMaterials[m];
+        
+        material.diffuse = loadTexture(aimaterial, aiTextureType_DIFFUSE, loadedTextures);
+        material.normal = loadTexture(aimaterial, aiTextureType_NORMALS, loadedTextures);
+        material.emissive = loadTexture(aimaterial, aiTextureType_EMISSIVE, loadedTextures);
+        {
+            aiColor3D color(0.f, 0.f, 0.f);
+            (*aimaterial).Get(AI_MATKEY_COLOR_DIFFUSE, color);
+//                printf("read diffuse color:%f,%f,%f\n", color.r, color.g, color.b);
+            material.diffuse_base_color = vec3(color.r, color.g, color.b);
+        }
+        {
+            aiColor3D color(0.f, 0.f, 0.f);
+            (*aimaterial).Get(AI_MATKEY_COLOR_EMISSIVE, color);
+//                printf("read emissive color:%f,%f,%f\n", color.r, color.g, color.b);
+            material.emissive_base_color = vec3(color.r, color.g, color.b);
+        }
+        assert(nameToMaterial.count((*aimaterial).GetName().C_Str()) == 0);
+        nameToMaterial.insert(std::make_pair((*aimaterial).GetName().C_Str(), &material));
+    }
+        
+    assert(meshes.size() >= scene->mNumMeshes);
+//	meshes.resize(scene->mNumMeshes);
+	for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
 		Mesh& mesh = meshes[m]; 
+        
+        const aiMesh* aimesh = scene->mMeshes[m];
+      
+        // TODO: read in materials, then associate to mesh later
+        unsigned int materialIndex = aimesh->mMaterialIndex;
+        unsigned materialsSize = scene->mNumMaterials;
+        if (materialsSize > materialIndex) {
+        
+            aiMaterial* aimaterial = scene->mMaterials[materialIndex];
+            aiString name = const_cast<aiMaterial*>(aimaterial)->GetName();
+            auto materialItr = nameToMaterial[name.C_Str()];
+            
+            printf("material:%s\n for mesh:%s", name.C_Str(), aimesh->mName.C_Str() );
+            assert(materialItr);
+            mesh.material = materialItr;
+        }
+    }
+    for (unsigned m = 0; m < scene->mNumMeshes; ++m) {
+        Mesh& mesh = meshes[m];
 
 		const aiMesh* aimesh = scene->mMeshes[m];
 		aiMatrix4x4 aiTransform;
@@ -412,62 +539,9 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
                 //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
 			}
 		}
-//        printf("\n");
-		mesh.index_count = mesh.face_count*3;
-
-		
-		unsigned int materialIndex = aimesh->mMaterialIndex;
-		unsigned materialsSize = scene->mNumMaterials;
-		if (materialsSize > materialIndex) {
-			const aiMaterial* material = scene->mMaterials[materialIndex];
-            aiString name = const_cast<aiMaterial*>(material)->GetName();
-            printf("material:%s\n", name.C_Str());
-			{
-				aiString path;
-				aiTextureMapping mapping;
-				unsigned int uvindex;
-				unsigned count = (*material).GetTextureCount(aiTextureType_DIFFUSE);
-				if (count) {
-					(*material).GetTexture(aiTextureType_DIFFUSE, 0, &path, &mapping, &uvindex);
-				}
-                if (path.length) {
-                    load_texture(mesh.diffuse, file_path, path.C_Str(), absolutePath);
-                }
-			}
-			{
-				aiString path;
-				unsigned count = (*material).GetTextureCount(aiTextureType_NORMALS);
-				if (count) {
-					(*material).GetTexture(aiTextureType_NORMALS, 0, &path);
-				}
-                if (path.length) {
-                    load_texture(mesh.normal, file_path, path.C_Str(), absolutePath);
-                }
-			}
-            {
-                aiString path;
-                unsigned count = (*material).GetTextureCount(aiTextureType_EMISSIVE);
-                if (count) {
-                    (*material).GetTexture(aiTextureType_EMISSIVE, 0, &path);
-                }
-                if (path.length) {
-                    load_texture(mesh.emissive, file_path, path.C_Str(), absolutePath);
-                }
-            }
-			{
-				aiColor3D color(0.f, 0.f, 0.f);
-				(*material).Get(AI_MATKEY_COLOR_DIFFUSE, color);
-				printf("read diffuse color:%f,%f,%f\n", color.r, color.g, color.b);
-				mesh.diffuse_base_color = vec3(color.r, color.g, color.b);
-			}
-            {
-                aiColor3D color(0.f, 0.f, 0.f);
-                (*material).Get(AI_MATKEY_COLOR_EMISSIVE, color);
-                printf("read emissive color:%f,%f,%f\n", color.r, color.g, color.b);
-//                mesh.diffuse_base_color = vec3(color.r, color.g, color.b);
-            }
-            
-		}
+        
+        // TODO: remove this line, avoid using face_count
+        mesh.index_count = mesh.face_count*3;
 	}
 
 
@@ -491,6 +565,19 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
 void Meshgroup::resizeNodes(size_t size) {
     nodes.resize(size);
     names.resize(size);
+}
+
+void Meshgroup::resizeMaterials(size_t size) {
+    materials.resize(size);
+}
+
+void Meshgroup::resizeMeshes(size_t size) {
+    meshes.resize(size);
+}
+
+void Meshgroup::resizeTextures(size_t size)
+{
+    textures.resize(size);
 }
 
 #ifdef USE_OPENGL

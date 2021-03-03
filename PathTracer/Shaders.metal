@@ -208,7 +208,7 @@ inline void sampleAreaLight(constant AreaLight & light,
     u = u * 2.0f - 1.0f;
     
     // Transform into light's coordinate system
-    float3 samplePosition = light.position; // + light.right * u.x + light.up * u.y;
+    float3 samplePosition = light.position + light.right * u.x + light.up * u.y;
     
     // Compute vector from sample point on light source to intersection point
     lightDirection = position - samplePosition;
@@ -337,7 +337,7 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                 shadowRay.origin = intersectionPoint + surfaceNormal * 1e-3f;
                 
                 // Travel towards the light source
-                shadowRay.direction = lightDirection;
+                shadowRay.direction = -lightDirection;
                 
                 // Avoid intersecting the light source itself
                 shadowRay.mask = RAY_MASK_SHADOW;
