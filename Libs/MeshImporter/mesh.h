@@ -49,7 +49,6 @@ struct Meshgroup {
 		unsigned *faces_indices;
         
         int vertex_count;
-        int face_count;
         int index_count;
 //        unsigned int materialIndex;
 
@@ -69,7 +68,6 @@ struct Meshgroup {
         int diffuse_base_color_location;
         int ambient_color_location;
 
-        
         void load_geometry_to_gpu() ;
         void load_textures_to_gpu() ;
 

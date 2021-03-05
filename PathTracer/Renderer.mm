@@ -7,6 +7,7 @@ Implementation for platform independent renderer class
 
 #import <simd/simd.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
+#import <set>
 
 #import "Renderer.h"
 #import "Transforms.h"
@@ -44,7 +45,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     id <MTLBuffer> _intersectionBuffer;
     id <MTLBuffer> _uniformBuffer;
     id <MTLBuffer> _triangleMaskBuffer;
-    id <MTLBuffer> _materialIdsBuffer;
+    id <MTLBuffer> _triangleColorTextureIndexBuffer;
     id <MTLBuffer> _indexBuffer;
     
     
@@ -57,7 +58,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     id <MTLTexture> _renderTargets[2];
     id <MTLTexture> _accumulationTargets[2];
     id <MTLTexture> _randomTexture;
-    NSArray* _colorTexture;
+    NSArray* _colorTextures;
 //    id <MTLTexture> _colorTexture[MaterialSize];
     
     dispatch_semaphore_t _sem;
@@ -276,14 +277,9 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _lightNode = &lightNode;
 
     _rootSceneNode.addChild(lightNode);
-
-    // TODO: add light mask to lightmesh, or make emissive
-    
-    // Light source
-//    float4x4 transform = matrix4x4_translation(_lightPosition.x,_lightPosition.y, _lightPosition.z)* matrix4x4_rotation(3.14f*0.5,vector3(0.f,1.f,0.f))* matrix4x4_scale(1.f, 1.f, 1.f);
-//    createCube(FACE_MASK_POSITIVE_Z, vector3(1.0f, 1.0f, 1.0f), transform, false, TRIANGLE_MASK_LIGHT, ImageMaterial);
-    
     _rootSceneNode.updateHierarchy();
+    
+
     
     [self createBuffers];
     [self createIntersector];
@@ -353,7 +349,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     }
     {
         size_t size = materials.size() + meshTriangleSize;
-        _materialIdsBuffer = [_device newBufferWithLength:size* sizeof(uint32_t) options:options];
+        _triangleColorTextureIndexBuffer = [_device newBufferWithLength:size* sizeof(uint32_t) options:options];
     }
 
     
@@ -465,14 +461,52 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
             }
         }
     }
+    
+
+    std::set<Meshgroup::Texture*> colorTextureSet;
+    for (int i=0;i<meshgroup.meshes.size();++i) {
+        assert(meshgroup.meshes[i].material);
+        Meshgroup::Material& material = *meshgroup.meshes[i].material;
+        assert(material.diffuse);
+        colorTextureSet.insert(material.diffuse);
+    }
+    
+    // make Metal textures buffers from texture data
+    NSURL *imageFileLocation = nullptr;
+    NSArray* textureFileNames = [[NSArray alloc] initWithObjects:@"image",@"concrete",@"redConcrete",@"greenConcrete", @"osb", nil];
+    assert(textureFileNames.count >= MaterialSize);
+    
+    NSMutableArray* metalTextures = [NSMutableArray array];
+    for (NSUInteger i = 0; i < MaterialSize; ++i) {
+        imageFileLocation= [[NSBundle mainBundle] URLForResource:textureFileNames[i] withExtension:@"tga"];
+        [metalTextures addObject:[self createAndLoadTextureUsingAAPLImage: imageFileLocation]];
+    }
+    
+    for (Meshgroup::Texture* colorTexture: colorTextureSet) {
+        Meshgroup::Texture& texture = *colorTexture;
+        [metalTextures addObject:[self createAndLoadTextureUsingTexture:texture]];
+    }
+    
+    _colorTextures = [metalTextures copy];
+    assert ([_colorTextures count] < MaxColorTextureSize);
+    
+    // create index buffers
     {
-        uint32_t* bufferOffset = (uint32_t*)_materialIdsBuffer.contents;
+        uint32_t* bufferOffset = (uint32_t*)_triangleColorTextureIndexBuffer.contents;
         memcpy(bufferOffset, &materials[0], materials.size() * sizeof(uint32_t));
         bufferOffset+=materials.size();
         for (int i=0;i<meshgroup.meshes.size();++i) {
+            assert(meshgroup.meshes[i].material);
+            Meshgroup::Material& material = *meshgroup.meshes[i].material;
+            assert(material.diffuse);
+            
+            std::set<Meshgroup::Texture*>::const_iterator itr = colorTextureSet.find(material.diffuse);
+            assert(itr != colorTextureSet.end());
+            uint32_t colorTextureIndex = static_cast<uint32_t> (std::distance(colorTextureSet.begin(), itr));
+            
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
             for (int j=0; j < meshTriangleSize; ++j) {
-                *bufferOffset = MaterialSize+i;
+                *bufferOffset = MaterialSize + colorTextureIndex;
                 ++bufferOffset;
             }
         }
@@ -530,29 +564,10 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     [_vertexNormalBuffer didModifyRange:NSMakeRange(0, _vertexNormalBuffer.length)];
     [_vertexCoordsBuffer didModifyRange:NSMakeRange(0, _vertexCoordsBuffer.length)];
     [_triangleMaskBuffer didModifyRange:NSMakeRange(0, _triangleMaskBuffer.length)];
-    [_materialIdsBuffer didModifyRange:NSMakeRange(0, _materialIdsBuffer.length)];
+    [_triangleColorTextureIndexBuffer didModifyRange:NSMakeRange(0, _triangleColorTextureIndexBuffer.length)];
     [_indexBuffer didModifyRange:NSMakeRange(0, _indexBuffer.length)];
 #endif
-    
-    NSURL *imageFileLocation = nullptr;
-    NSArray* textureFileNames = [[NSArray alloc] initWithObjects:@"image",@"concrete",@"redConcrete",@"greenConcrete", @"osb", nil];
-    assert(textureFileNames.count >= MaterialSize);
-    
-    NSMutableArray* textures = [NSMutableArray array];
-    for (NSUInteger i = 0; i < MaterialSize; ++i) {
-        imageFileLocation= [[NSBundle mainBundle] URLForResource:textureFileNames[i] withExtension:@"tga"];
-        [textures addObject:[self createAndLoadTextureUsingAAPLImage: imageFileLocation]];
-    }
-    
-    assert (MaterialSize + meshgroup.meshes.size() < MaxMaterialSize);
-    for (int i=0;i<meshgroup.meshes.size();++i) {
-        assert(meshgroup.meshes[i].material);
-        Meshgroup::Material& material = *meshgroup.meshes[i].material;
-        assert(material.diffuse);
-        Meshgroup::Texture& texture = *material.diffuse;
-        [textures addObject:[self createAndLoadTextureUsingTexture:texture]];
-    }
-    _colorTexture = [textures copy];
+
     _frameIndex = 0;
 }
 
@@ -830,15 +845,15 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         [computeEncoder setBuffer:_vertexNormalBuffer offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_vertexCoordsBuffer offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_triangleMaskBuffer offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_materialIdsBuffer  offset:0                    atIndex:index++];
+        [computeEncoder setBuffer:_triangleColorTextureIndexBuffer  offset:0                    atIndex:index++];
         [computeEncoder setBuffer:_indexBuffer        offset:0                    atIndex:index++];
         [computeEncoder setBytes:&bounce              length:sizeof(bounce)       atIndex:index++];
         
         short int textureIndex = 0;
         
         [computeEncoder setTexture:_randomTexture  atIndex:textureIndex++];
-        for (NSUInteger i=0;i<MaxMaterialSize; ++i) {
-            id<MTLTexture> texture = i < [_colorTexture count] ? _colorTexture[i] : NULL;
+        for (NSUInteger i=0;i<MaxColorTextureSize; ++i) {
+            id<MTLTexture> texture = i < [_colorTextures count] ? _colorTextures[i] : NULL;
             [computeEncoder setTexture:texture atIndex:textureIndex++];
         }
         [computeEncoder setTexture:_renderTargets[0] atIndex:textureIndex++];

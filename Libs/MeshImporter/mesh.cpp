@@ -174,13 +174,12 @@ vec3 getTriangleNormal(vec3 v0, vec3 v1, vec3 v2) {
 void Meshgroup::createQuad(Mesh& mesh) {
         
     mesh.vertex_count = 4;
-    mesh.face_count = 2;
-    mesh.index_count = mesh.face_count*3;
+    mesh.index_count = 2*3;
 
     // allocate memory for vertex points
     mesh.vp = (float*)malloc(mesh.vertex_count * 3 * sizeof(float));
     mesh.vn = (float*)malloc(mesh.vertex_count * 3 * sizeof(float));
-    mesh.faces_indices = (unsigned*)malloc(mesh.face_count * 3 * sizeof(unsigned));
+    mesh.faces_indices = (unsigned*)malloc(mesh.index_count * sizeof(unsigned));
     
     size_t uvs_channels = 1;
     mesh.uvs.resize(uvs_channels);
@@ -216,7 +215,7 @@ void Meshgroup::createQuad(Mesh& mesh) {
     
     uint32_t vertexIndices[6] = {0,1,2,0,3,1};
     
-    for (int i=0;i<mesh.face_count;++i) {
+    for (int i=0;i<mesh.index_count/3;++i) {
         uint32_t a = vertexIndices[i*3 + 0];
         uint32_t b = vertexIndices[i*3 + 1];
         uint32_t c = vertexIndices[i*3 + 2];
@@ -430,7 +429,7 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
 //		print(transform);
 //		printf("    %i vertices in mesh[%d]\n", aimesh->mNumVertices, m);
 		mesh.vertex_count = aimesh->mNumVertices;
-		mesh.face_count = aimesh->mNumFaces;
+		mesh.index_count = aimesh->mNumFaces*3;
 
 		// allocate memory for vertex points
 		if (aimesh->HasPositions()) {
@@ -464,7 +463,7 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
 		}
 		if (aimesh->HasFaces()) {
 			printf("mesh has faces\n");
-			mesh.faces_indices = (unsigned*)malloc(mesh.face_count * 3 * sizeof(unsigned));
+			mesh.faces_indices = (unsigned*)malloc(mesh.index_count * sizeof(unsigned));
 		}
 
 		for (unsigned int i = 0; i < aimesh->mNumVertices; i++) {
@@ -539,9 +538,6 @@ bool Meshgroup::load_meshes(const char* file_path, const char* file_name, bool a
                 //printf("ix:[%d,%d,%d] ", mesh.faces_indices[i*3],mesh.faces_indices[i*3+1],mesh.faces_indices[i*3+2]);
 			}
 		}
-        
-        // TODO: remove this line, avoid using face_count
-        mesh.index_count = mesh.face_count*3;
 	}
 
 

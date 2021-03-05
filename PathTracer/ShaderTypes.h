@@ -43,15 +43,15 @@ struct Uniforms
 
 // Constant values shared between shader and C code which indicate the size of argument arrays
 //   in the structure defining the argument buffers
-typedef enum Materials {
+typedef enum ColorTextures {
     ImageMaterial,
     ConcreteMaterial,
     RedConcreteMaterial,
     GreenConcreteMaterial,
     PlywoodMaterial,
     MaterialSize,
-    MaxMaterialSize = 64
-} Materials;
+    MaxColorTextureSize = 64
+} ColorTextures;
 
 // Argument buffer indices shared between shader and C code to ensure Metal shader buffer
 //   input match Metal API texture set calls
@@ -59,7 +59,7 @@ typedef enum AAPLArgumentBufferID
 {
     AAPLArgumentBufferIDRandom  = 0,
     AAPLArgumentBufferIDColor   = 1,
-    AAPLArgumentBufferIDRenderTarget = AAPLArgumentBufferIDColor+MaxMaterialSize
+    AAPLArgumentBufferIDRenderTarget = AAPLArgumentBufferIDColor+MaxColorTextureSize
 } AAPLArgumentBufferID;
 
 #endif /* ShaderTypes_h */

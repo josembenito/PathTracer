@@ -259,12 +259,12 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                         device float3 *vertexNormals,
                         device float2 *vertexCoords,
                         device uint *triangleMasks,
-                        device uint *materials,
+                        device uint *triangleColorTextureIndices,
                         device uint *indices,
                         constant unsigned int & bounce,
                         texture2d<unsigned int> randomTex,
 //                        array<texture2d<half>, MaterialSize> colorTexture,
-                        array<texture2d<half>, MaxMaterialSize> colorTexture,
+                        array<texture2d<half>, MaxColorTextureSize> colorTextures,
                         texture2d<float, access::write> dstTex)
 // TODO:
 // create array of color textures and init in program like in Argument Buffer Array with Heaps example
@@ -323,8 +323,8 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
 
 //                const half4 colorSample = half4(intersection.coordinates.x, intersection.coordinates.y,0,0);
 //                color *= float3(colorSample.xyz);
-                uint materialId = materials[intersection.primitiveIndex];
-                const half4 colorSample = colorTexture[materialId].sample(textureSampler, uvs);
+                uint colorTextureIndex = triangleColorTextureIndices[intersection.primitiveIndex];
+                const half4 colorSample = colorTextures[colorTextureIndex].sample(textureSampler, uvs);
                 color *= float3(colorSample.xyz);
                 
                 // Compute the shadow ray. The shadow ray will check if the sample position on the
