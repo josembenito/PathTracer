@@ -48,7 +48,14 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     id <MTLBuffer> _triangleColorTextureIndexBuffer;
     id <MTLBuffer> _indexBuffer;
     
+//    id <MTLBuffer> _transformsBuffer;
+//    id <MTLBuffer> _normalTransformsBuffer;
+//    id <MTLBuffer> _vertexTransformIndicesBuffer;
+//    id <MTLBuffer> _transformedVertexPositionBuffer;
+//    id <MTLBuffer> _transformedVertexNormalBuffer;
     
+    
+    id <MTLComputePipelineState> _vertexPipeline;
     id <MTLComputePipelineState> _rayPipeline;
     id <MTLComputePipelineState> _shadePipeline;
     id <MTLComputePipelineState> _shadowPipeline;
@@ -79,6 +86,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     Node _rootSceneNode;
     Node _cameraNode;
     float _scaleValue;
+    
+    size_t _vertexSize;
     
     bool _isSceneInitialized;
 }
@@ -115,6 +124,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         
         _isSceneInitialized =false;
         
+        _vertexSize = 0;
+        
     }
 
     return self;
@@ -138,11 +149,22 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 {
     NSError *error = NULL;
     
-    // Create compute pipelines will will execute code on the GPU
+//    // Create compute pipelines will will execute code on the GPU
     MTLComputePipelineDescriptor *computeDescriptor = [[MTLComputePipelineDescriptor alloc] init];
-
-    // Set to YES to allow compiler to make certain optimizations
+//
+//    // Set to YES to allow compiler to make certain optimizations
     computeDescriptor.threadGroupSizeIsMultipleOfThreadExecutionWidth = YES;
+//
+//    // updates vertices according to view/projection matrices
+//    computeDescriptor.computeFunction = [_library newFunctionWithName:@"vertexTransformation"];
+//
+//    _vertexPipeline = [_device newComputePipelineStateWithDescriptor:computeDescriptor
+//                                                          options:0
+//                                                       reflection:nil
+//                                                            error:&error];
+    
+    if (!_rayPipeline)
+        NSLog(@"Failed to create pipeline state: %@", error);
     
     // Generates rays according to view/projection matrices
     computeDescriptor.computeFunction = [_library newFunctionWithName:@"rayKernel"];
@@ -254,12 +276,10 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     size_t lastMaterial = meshgroup.materials.size()-1;
     Meshgroup::Material& lightMaterial = meshgroup.materials[lastMaterial];
     
-
     lightMaterial.diffuse = &Meshgroup::default_diffuse;
     lightMaterial.normal = &Meshgroup::default_normal;
     lightMaterial.emissive = &Meshgroup::default_emissive;
     lightMaterial.emissive_base_color = vec3(2,2,2); // set emissive color length above 1 to mask as light
-
 
     size_t lastNode = meshgroup.nodes.size()-1;
     Node& lightNode = meshgroup.nodes[lastNode];
@@ -278,8 +298,6 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     _rootSceneNode.addChild(lightNode);
     _rootSceneNode.updateHierarchy();
-    
-
     
     [self createBuffers];
     [self createIntersector];
@@ -317,8 +335,10 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         meshesVertexSize +=meshgroup.meshes[i].vertex_count;
     }
     {
-        size_t size = vertices.size() + meshesVertexSize;
-        _vertexPositionBuffer = [_device newBufferWithLength:size * sizeof(float3) options:options];
+        _vertexSize = vertices.size() + meshesVertexSize;
+        _vertexPositionBuffer = [_device newBufferWithLength:_vertexSize * sizeof(float3) options:options];
+//        _transformedVertexPositionBuffer =  [_device newBufferWithLength:_vertexSize * sizeof(float3) options:options];;
+        
     }
 //    {
         
@@ -328,6 +348,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     {
         size_t size = normals.size() + meshesVertexSize;
         _vertexNormalBuffer = [_device newBufferWithLength:size * sizeof(float3) options:options];
+//        _transformedVertexNormalBuffer = [_device newBufferWithLength:size * sizeof(float3) options:options];
     }
     {
         size_t size = uvs.size() + meshesVertexSize;
@@ -351,7 +372,15 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         size_t size = materials.size() + meshTriangleSize;
         _triangleColorTextureIndexBuffer = [_device newBufferWithLength:size* sizeof(uint32_t) options:options];
     }
-
+//    {
+//        size_t size = meshgroup.meshes.size();
+//        _transformsBuffer = [_device newBufferWithLength:size* sizeof(matrix_float4x4) options:options];
+//        _normalTransformsBuffer = [_device newBufferWithLength:size* sizeof(matrix_float4x4) options:options];
+//    }
+//    {
+//        size_t size = _vertexSize;
+//        _vertexTransformIndicesBuffer = [_device newBufferWithLength:size* sizeof(uint32_t) options:options];
+//    }
     
     auto inplaceTransformVector3 = [](mat4 A, float* src, size_t count) {
         for (int i=0;i<count;++i) {
@@ -381,8 +410,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         }
     };
 
-    // Copy vertex data into buffers
-
+    // Copy vertex data into buffer
     {
         float3* bufferOffset = (float3*)_vertexPositionBuffer.contents;
         memcpy(bufferOffset, &vertices[0], vertices.size() * sizeof(float3));
@@ -391,6 +419,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
             copyToFloat3Buffer(bufferOffset, meshgroup.meshes[i].vp, meshgroup.meshes[i].vertex_count);
             bufferOffset+=meshgroup.meshes[i].vertex_count;
         }
+        // no need to initialize _transformedVertexPositionBuffer as it will be overwritten on first frame
     }
     
 //    {
@@ -412,6 +441,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
             copyToFloat3Buffer(bufferOffset, meshgroup.meshes[i].vn, meshgroup.meshes[i].vertex_count);
             bufferOffset+=meshgroup.meshes[i].vertex_count;
         }
+        // no need to initialize _transformedVertexNormalBuffer as it will be overwritten on first frame
     }
     auto copyToFloat2Buffer = [](float2* dest, float* src, size_t count) {
         for (int i=0;i<count;++i) {
@@ -461,8 +491,36 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
             }
         }
     }
+//    {
+//        matrix_float4x4* bufferOffset = (matrix_float4x4*)_transformsBuffer.contents;
+//        for (int i=0;i<meshgroup.meshes.size();++i) {
+//            assert(meshgroup.meshes[i].node);
+//            Node& node = *meshgroup.meshes[i].node;
+//            *bufferOffset = matrix4x4_from_mat4(node.worldMatrix);
+//            ++bufferOffset;
+//        }
+//    }
+//    {
+//        matrix_float4x4* bufferOffset = (matrix_float4x4*)_normalTransformsBuffer.contents;
+//        for (int i=0;i<meshgroup.meshes.size();++i) {
+//            assert(meshgroup.meshes[i].node);
+//            Node& node = *meshgroup.meshes[i].node;
+//            *bufferOffset = matrix4x4_from_mat4(transpose(node.worldInverseMatrix));
+//            ++bufferOffset;
+//        }
+//    }
+//    {
+//        uint32_t* bufferOffset = (uint32_t*)_vertexTransformIndicesBuffer.contents;
+//        for (int i=0;i<meshgroup.meshes.size();++i) {
+//            size_t vertexSize = meshgroup.meshes[i].vertex_count;
+//            for (int j=0; j < vertexSize; ++j) {
+//                *bufferOffset = i;
+//                ++bufferOffset;
+//            }
+//        }
+//    }
     
-
+    // gather color textures
     std::set<Meshgroup::Texture*> colorTextureSet;
     for (int i=0;i<meshgroup.meshes.size();++i) {
         assert(meshgroup.meshes[i].material);
@@ -471,13 +529,13 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
         colorTextureSet.insert(material.diffuse);
     }
     
-    // make Metal textures buffers from texture data
+    // make Metal color textures buffers from texture data
     NSURL *imageFileLocation = nullptr;
     NSArray* textureFileNames = [[NSArray alloc] initWithObjects:@"image",@"concrete",@"redConcrete",@"greenConcrete", @"osb", nil];
-    assert(textureFileNames.count >= MaterialSize);
+    assert(textureFileNames.count == DefaultColorTextureSize);
     
     NSMutableArray* metalTextures = [NSMutableArray array];
-    for (NSUInteger i = 0; i < MaterialSize; ++i) {
+    for (NSUInteger i = 0; i < DefaultColorTextureSize; ++i) {
         imageFileLocation= [[NSBundle mainBundle] URLForResource:textureFileNames[i] withExtension:@"tga"];
         [metalTextures addObject:[self createAndLoadTextureUsingAAPLImage: imageFileLocation]];
     }
@@ -490,7 +548,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _colorTextures = [metalTextures copy];
     assert ([_colorTextures count] < MaxColorTextureSize);
     
-    // create index buffers
+    // fill triangle color texture index buffer
     {
         uint32_t* bufferOffset = (uint32_t*)_triangleColorTextureIndexBuffer.contents;
         memcpy(bufferOffset, &materials[0], materials.size() * sizeof(uint32_t));
@@ -506,7 +564,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
             
             size_t meshTriangleSize = meshgroup.meshes[i].index_count/3;
             for (int j=0; j < meshTriangleSize; ++j) {
-                *bufferOffset = MaterialSize + colorTextureIndex;
+                // triangle color texture index points to _colorTextures
+                *bufferOffset = DefaultColorTextureSize + colorTextureIndex;
                 ++bufferOffset;
             }
         }
@@ -556,16 +615,24 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 //    }
 
 #endif
-    // When using managed buffers, we need to indicate that we modified the buffer so that the GPU
-    // copy can be updated
+    // When using managed buffers, we need to indicate that we modified the buffer so that the GPU copy can be updated
 #if !TARGET_OS_IPHONE
     [_vertexPositionBuffer didModifyRange:NSMakeRange(0, _vertexPositionBuffer.length)];
-    //[_vertexColorBuffer didModifyRange:NSMakeRange(0, _vertexColorBuffer.length)];
+//    [_transformedVertexPositionBuffer didModifyRange:NSMakeRange(0, _transformedVertexPositionBuffer.length)];
+//    [_transformedVertexNormalBuffer  didModifyRange:NSMakeRange(0, _transformedVertexNormalBuffer.length)];
+    
+//    [_vertexColorBuffer didModifyRange:NSMakeRange(0, _vertexColorBuffer.length)];
     [_vertexNormalBuffer didModifyRange:NSMakeRange(0, _vertexNormalBuffer.length)];
     [_vertexCoordsBuffer didModifyRange:NSMakeRange(0, _vertexCoordsBuffer.length)];
+    
     [_triangleMaskBuffer didModifyRange:NSMakeRange(0, _triangleMaskBuffer.length)];
     [_triangleColorTextureIndexBuffer didModifyRange:NSMakeRange(0, _triangleColorTextureIndexBuffer.length)];
     [_indexBuffer didModifyRange:NSMakeRange(0, _indexBuffer.length)];
+    
+//    [_transformsBuffer didModifyRange:NSMakeRange(0, _transformsBuffer.length)];
+//    [_normalTransformsBuffer didModifyRange:NSMakeRange(0, _normalTransformsBuffer.length)];
+//    [_vertexTransformIndicesBuffer didModifyRange:NSMakeRange(0, _vertexTransformIndicesBuffer.length)];
+    
 #endif
 
     _frameIndex = 0;
@@ -585,7 +652,7 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     _accelerationStructure = [[MPSTriangleAccelerationStructure alloc] initWithDevice:_device];
     
     _accelerationStructure.vertexBuffer = _vertexPositionBuffer;
-
+//    _accelerationStructure.vertexBuffer = _transformedVertexPositionBuffer;
     _accelerationStructure.indexBuffer =_indexBuffer;
     _accelerationStructure.maskBuffer = _triangleMaskBuffer;
 #ifdef RENDER_MESH
@@ -637,7 +704,8 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
     return texture;
 }
 
-- (id<MTLTexture>)createAndLoadTextureUsingTexture: (Meshgroup::Texture&) texture {
+- (id<MTLTexture>)createAndLoadTextureUsingTexture: (Meshgroup::Texture&) texture
+{
     assert (texture.n == 4);
     MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
     textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
@@ -793,131 +861,171 @@ static const size_t intersectionStride = sizeof(MPSIntersectionDistancePrimitive
 
     [self updateUniforms];
     
-    NSUInteger width = (NSUInteger)_size.width;
-    NSUInteger height = (NSUInteger)_size.height;
+    id <MTLComputeCommandEncoder> computeEncoder = NULL;
     
-    // We will launch a rectangular grid of threads on the GPU to generate the rays. Threads are launched in
-    // groups called "threadgroups". We need to align the number of threads to be a multiple of the threadgroup
-    // size. We indicated when compiling the pipeline that the threadgroup size would be a multiple of the thread
-    // execution width (SIMD group size) which is typically 32 or 64 so 8x8 is a safe threadgroup size which
-    // should be small to be supported on most devices. A more advanced application would choose the threadgroup
-    // size dynamically.
-    MTLSize threadsPerThreadgroup = MTLSizeMake(8, 8, 1);
-    MTLSize threadgroups = MTLSizeMake((width  + threadsPerThreadgroup.width  - 1) / threadsPerThreadgroup.width,
-                                       (height + threadsPerThreadgroup.height - 1) / threadsPerThreadgroup.height,
-                                       1);
+//    // Vertex (compute) shader
+//    {
+//        uint index = 0;
+//        // First, we transform vertices on GPU. We create a compute command encoder which will be used to add
+//        // commands to the command buffer.
+//        computeEncoder = [commandBuffer computeCommandEncoder];
+//
+//
+//        MTLSize threadsPerThreadgroup = MTLSizeMake(32, 1, 1);
+//        MTLSize threadgroups = MTLSizeMake((_vertexSize + threadsPerThreadgroup.width  - 1) / threadsPerThreadgroup.width,1,1);
+//
+////        kernel void vertexTransformation(uint2 gid [[thread_position_in_grid]],
+////                                         device float4x4* transforms,
+////                                         device float4x4* normalTransforms,
+////                                         device uint *vertexTransformIndices,
+////                                         const device float4 *inVertices, // in and out vertices cannot be the same to maintain original vertices
+////                                         device float4 *outVertices,
+////                                         const device float4 *inNormals,
+////                                         device float4 *outNormals)
+//        [computeEncoder setBuffer:_transformsBuffer offset:0                atIndex:index++];
+//        [computeEncoder setBuffer:_normalTransformsBuffer offset:0                atIndex:index++];
+//        [computeEncoder setBuffer:_vertexTransformIndicesBuffer offset:0          atIndex:index++];
+//        [computeEncoder setBuffer:_vertexPositionBuffer offset:0                  atIndex:index++];
+//        [computeEncoder setBuffer:_transformedVertexPositionBuffer offset:0       atIndex:index++];
+//        [computeEncoder setBuffer:_vertexNormalBuffer offset:0                  atIndex:index++];
+//        [computeEncoder setBuffer:_transformedVertexNormalBuffer offset:0       atIndex:index++];
+//
+//        [computeEncoder setComputePipelineState:_vertexPipeline];
+//
+//        [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
+//        [computeEncoder endEncoding];
+//    }
     
-    // First, we will generate rays on the GPU. We create a compute command encoder which will be used to add
-    // commands to the command buffer.
-    id <MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoder];
-    
-    [computeEncoder setBuffer:_uniformBuffer   offset:_uniformBufferOffset atIndex:0];
-    [computeEncoder setBuffer:_rayBuffer       offset:0                    atIndex:1];
-    
-    [computeEncoder setTexture:_randomTexture    atIndex:0];
-    [computeEncoder setTexture:_renderTargets[0] atIndex:1];
-    [computeEncoder setComputePipelineState:_rayPipeline];
-
-    [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
-    [computeEncoder endEncoding];
-    
-    // We will iterate over the next few kernels several times to allow light to bounce around the scene
-    for (int bounce = 0; bounce < 3; bounce++) {
-        _intersector.intersectionDataType = MPSIntersectionDataTypeDistancePrimitiveIndexCoordinates;
-
-        // We can then pass the rays to the MPSRayIntersector to compute the intersections with our acceleration structure
-        [_intersector encodeIntersectionToCommandBuffer:commandBuffer               // Command buffer to encode into
-                                       intersectionType:MPSIntersectionTypeNearest  // Intersection test type
-                                              rayBuffer:_rayBuffer                  // Ray buffer
-                                        rayBufferOffset:0                           // Offset into ray buffer
-                                     intersectionBuffer:_intersectionBuffer         // Intersection buffer (destination)
-                               intersectionBufferOffset:0                           // Offset into intersection buffer
-                                               rayCount:width * height              // Number of rays
-                                  accelerationStructure:_accelerationStructure];    // Acceleration structure
-        // We launch another pipeline to consume the intersection results and shade the scene
+    // Pixel (compute) shaders
+    {
+        NSUInteger width = (NSUInteger)_size.width;
+        NSUInteger height = (NSUInteger)_size.height;
+        
+        // We will launch a rectangular grid of threads on the GPU to generate the rays. Threads are launched in
+        // groups called "threadgroups". We need to align the number of threads to be a multiple of the threadgroup
+        // size. We indicated when compiling the pipeline that the threadgroup size would be a multiple of the thread
+        // execution width (SIMD group size) which is typically 32 or 64 so 8x8 is a safe threadgroup size which
+        // should be small to be supported on most devices. A more advanced application would choose the threadgroup
+        // size dynamically.
+        MTLSize threadsPerThreadgroup = MTLSizeMake(8, 8, 1);
+        MTLSize threadgroups = MTLSizeMake((width  + threadsPerThreadgroup.width  - 1) / threadsPerThreadgroup.width,
+                                           (height + threadsPerThreadgroup.height - 1) / threadsPerThreadgroup.height,
+                                           1);
+        
+        // First, we will generate rays on the GPU. We create a compute command encoder which will be used to add
+        // commands to the command buffer.
         computeEncoder = [commandBuffer computeCommandEncoder];
         
-        short int index = 0;
-        [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:index++];
-        [computeEncoder setBuffer:_rayBuffer          offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_vertexNormalBuffer offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_vertexCoordsBuffer offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_triangleMaskBuffer offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_triangleColorTextureIndexBuffer  offset:0                    atIndex:index++];
-        [computeEncoder setBuffer:_indexBuffer        offset:0                    atIndex:index++];
-        [computeEncoder setBytes:&bounce              length:sizeof(bounce)       atIndex:index++];
+        [computeEncoder setBuffer:_uniformBuffer   offset:_uniformBufferOffset atIndex:0];
+        [computeEncoder setBuffer:_rayBuffer       offset:0                    atIndex:1];
         
-        short int textureIndex = 0;
+        [computeEncoder setTexture:_randomTexture    atIndex:0];
+        [computeEncoder setTexture:_renderTargets[0] atIndex:1];
+        [computeEncoder setComputePipelineState:_rayPipeline];
+
+        [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
+        [computeEncoder endEncoding];
         
-        [computeEncoder setTexture:_randomTexture  atIndex:textureIndex++];
-        for (NSUInteger i=0;i<MaxColorTextureSize; ++i) {
-            id<MTLTexture> texture = i < [_colorTextures count] ? _colorTextures[i] : NULL;
-            [computeEncoder setTexture:texture atIndex:textureIndex++];
+        // We will iterate over the next few kernels several times to allow light to bounce around the scene
+        for (int bounce = 0; bounce < 3; bounce++) {
+            
+            _intersector.intersectionDataType = MPSIntersectionDataTypeDistancePrimitiveIndexCoordinates;
+
+            // We can then pass the rays to the MPSRayIntersector to compute the intersections with our acceleration structure
+            [_intersector encodeIntersectionToCommandBuffer:commandBuffer               // Command buffer to encode into
+                                           intersectionType:MPSIntersectionTypeNearest  // Intersection test type
+                                                  rayBuffer:_rayBuffer                  // Ray buffer
+                                            rayBufferOffset:0                           // Offset into ray buffer
+                                         intersectionBuffer:_intersectionBuffer         // Intersection buffer (destination)
+                                   intersectionBufferOffset:0                           // Offset into intersection buffer
+                                                   rayCount:width * height              // Number of rays
+                                      accelerationStructure:_accelerationStructure];    // Acceleration structure
+            // We launch another pipeline to consume the intersection results and shade the scene
+            computeEncoder = [commandBuffer computeCommandEncoder];
+            
+            short int index = 0;
+            [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:index++];
+            [computeEncoder setBuffer:_rayBuffer          offset:0                    atIndex:index++];
+            [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:index++];
+            [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:index++];
+            [computeEncoder setBuffer:_vertexNormalBuffer offset:0                    atIndex:index++];
+//            [computeEncoder setBuffer:_transformedVertexNormalBuffer offset:0                    atIndex:index++];
+            [computeEncoder setBuffer:_vertexCoordsBuffer offset:0                    atIndex:index++];
+            [computeEncoder setBuffer:_triangleMaskBuffer offset:0                    atIndex:index++];
+            [computeEncoder setBuffer:_triangleColorTextureIndexBuffer  offset:0      atIndex:index++];
+            [computeEncoder setBuffer:_indexBuffer        offset:0                    atIndex:index++];
+            [computeEncoder setBytes:&bounce              length:sizeof(bounce)       atIndex:index++];
+            
+            short int textureIndex = 0;
+            
+            [computeEncoder setTexture:_randomTexture  atIndex:textureIndex++];
+            for (NSUInteger i=0;i<MaxColorTextureSize; ++i) {
+                id<MTLTexture> texture = i < [_colorTextures count] ? _colorTextures[i] : NULL;
+                [computeEncoder setTexture:texture atIndex:textureIndex++];
+            }
+            [computeEncoder setTexture:_renderTargets[0] atIndex:textureIndex++];
+
+            [computeEncoder setComputePipelineState:_shadePipeline];
+            
+            [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
+            
+            [computeEncoder endEncoding];
+            
+            // We intersect rays with the scene, except this time we are intersecting shadow rays. We only need
+            // to know whether the shadows rays hit anything on the way to the light source, not which triangle
+            // was intersected. Therefore, we can use the "any" intersection type to end the intersection search
+            // as soon as any intersection is found. This is typically much faster than finding the nearest
+            // intersection. We can also use MPSIntersectionDataTypeDistance, because we don't need the triangle
+            // index and barycentric coordinates.
+            _intersector.intersectionDataType = MPSIntersectionDataTypeDistance;
+            
+            [_intersector encodeIntersectionToCommandBuffer:commandBuffer
+                                           intersectionType:MPSIntersectionTypeAny
+                                                  rayBuffer:_shadowRayBuffer
+                                            rayBufferOffset:0
+                                         intersectionBuffer:_intersectionBuffer
+                                   intersectionBufferOffset:0
+                                                   rayCount:width * height
+                                      accelerationStructure:_accelerationStructure];
+            
+            // Finally, we launch a kernel which writes the color computed by the shading kernel into the
+            // output image, but only if the corresponding shadow ray does not intersect anything on the way to
+            // the light. If the shadow ray intersects a triangle before reaching the light source, the original
+            // intersection point was in shadow.
+            computeEncoder = [commandBuffer computeCommandEncoder];
+            
+            [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:0];
+            [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:1];
+            [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:2];
+            
+            [computeEncoder setTexture:_renderTargets[0] atIndex:0];
+            [computeEncoder setTexture:_renderTargets[1] atIndex:1];
+            
+            [computeEncoder setComputePipelineState:_shadowPipeline];
+            
+            [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
+            
+            [computeEncoder endEncoding];
+            
+            std::swap(_renderTargets[0], _renderTargets[1]);
         }
-        [computeEncoder setTexture:_renderTargets[0] atIndex:textureIndex++];
 
-        [computeEncoder setComputePipelineState:_shadePipeline];
-        
-        [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
-        
-        [computeEncoder endEncoding];
-        
-        // We intersect rays with the scene, except this time we are intersecting shadow rays. We only need
-        // to know whether the shadows rays hit anything on the way to the light source, not which triangle
-        // was intersected. Therefore, we can use the "any" intersection type to end the intersection search
-        // as soon as any intersection is found. This is typically much faster than finding the nearest
-        // intersection. We can also use MPSIntersectionDataTypeDistance, because we don't need the triangle
-        // index and barycentric coordinates.
-        _intersector.intersectionDataType = MPSIntersectionDataTypeDistance;
-        
-        [_intersector encodeIntersectionToCommandBuffer:commandBuffer
-                                       intersectionType:MPSIntersectionTypeAny
-                                              rayBuffer:_shadowRayBuffer
-                                        rayBufferOffset:0
-                                     intersectionBuffer:_intersectionBuffer
-                               intersectionBufferOffset:0
-                                               rayCount:width * height
-                                  accelerationStructure:_accelerationStructure];
-        
-        // Finally, we launch a kernel which writes the color computed by the shading kernel into the
-        // output image, but only if the corresponding shadow ray does not intersect anything on the way to
-        // the light. If the shadow ray intersects a triangle before reaching the light source, the original
-        // intersection point was in shadow.
+        // The final kernel averages the current frame's image with all previous frames to reduce noise due
+        // random sampling of the scene.
         computeEncoder = [commandBuffer computeCommandEncoder];
-        
+            
         [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:0];
-        [computeEncoder setBuffer:_shadowRayBuffer    offset:0                    atIndex:1];
-        [computeEncoder setBuffer:_intersectionBuffer offset:0                    atIndex:2];
         
-        [computeEncoder setTexture:_renderTargets[0] atIndex:0];
-        [computeEncoder setTexture:_renderTargets[1] atIndex:1];
+        [computeEncoder setTexture:_renderTargets[0]       atIndex:0];
+        [computeEncoder setTexture:_accumulationTargets[0] atIndex:1];
+        [computeEncoder setTexture:_accumulationTargets[1] atIndex:2];
         
-        [computeEncoder setComputePipelineState:_shadowPipeline];
+        [computeEncoder setComputePipelineState:_accumulatePipeline];
         
         [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
         
         [computeEncoder endEncoding];
-        
-        std::swap(_renderTargets[0], _renderTargets[1]);
     }
-
-    // The final kernel averages the current frame's image with all previous frames to reduce noise due
-    // random sampling of the scene.
-    computeEncoder = [commandBuffer computeCommandEncoder];
-        
-    [computeEncoder setBuffer:_uniformBuffer      offset:_uniformBufferOffset atIndex:0];
-    
-    [computeEncoder setTexture:_renderTargets[0]       atIndex:0];
-    [computeEncoder setTexture:_accumulationTargets[0] atIndex:1];
-    [computeEncoder setTexture:_accumulationTargets[1] atIndex:2];
-    
-    [computeEncoder setComputePipelineState:_accumulatePipeline];
-    
-    [computeEncoder dispatchThreadgroups:threadgroups threadsPerThreadgroup:threadsPerThreadgroup];
-    
-    [computeEncoder endEncoding];
     
     std::swap(_accumulationTargets[0], _accumulationTargets[1]);
 

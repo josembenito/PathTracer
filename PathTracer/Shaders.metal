@@ -12,6 +12,21 @@ Metal shaders used for ray tracing
 
 using namespace metal;
 
+kernel void vertexTransformation(uint2 gid [[thread_position_in_grid]],
+                                 device float4x4* transforms,
+                                 device float4x4* normalTransforms,
+                                 device uint *vertexTransformIndices,
+                                 const device float4 *inVertices, // in and out vertices cannot be the same to maintain original vertices
+                                 device float4 *outVertices,
+                                 const device float4 *inNormals,
+                                 device float4 *outNormals)
+{
+    uint vertexIndex =  gid.x;
+    uint transformIndex = vertexTransformIndices[vertexIndex];
+    outVertices[vertexIndex] =  transforms[ transformIndex ] * inVertices[vertexIndex];
+    outNormals[vertexIndex] = normalTransforms [ transformIndex ] * inNormals [vertexIndex];
+}
+
 // Represents a three dimensional ray which will be intersected with the scene. The ray type
 // is customized using properties of the MPSRayIntersector.
 struct Ray {
@@ -82,10 +97,10 @@ float halton(unsigned int i, unsigned int d) {
 
 // Generates rays starting from the camera origin and traveling towards the image plane aligned
 // with the camera's coordinate system.
+// Buffers bound on the CPU. Note that 'constant' should be used for small
+// read-only data which will be reused across threads. 'device' should be
+// used for writable data or data which will only be used by a single thread.
 kernel void rayKernel(uint2 tid [[thread_position_in_grid]],
-                      // Buffers bound on the CPU. Note that 'constant' should be used for small
-                      // read-only data which will be reused across threads. 'device' should be
-                      // used for writable data or data which will only be used by a single thread.
                       constant Uniforms & uniforms,
                       device Ray *rays,
                       texture2d<unsigned int> randomTex,
@@ -107,8 +122,7 @@ kernel void rayKernel(uint2 tid [[thread_position_in_grid]],
         unsigned int offset = randomTex.read(tid).x;
         
         // Add a random offset to the pixel coordinates for antialiasing
-        float2 r = float2(halton(offset + uniforms.frameIndex, 0),
-                          halton(offset + uniforms.frameIndex, 1));
+        float2 r = float2(halton(offset + uniforms.frameIndex, 0), halton(offset + uniforms.frameIndex, 1));
         
         pixel += r;
         
@@ -122,17 +136,15 @@ kernel void rayKernel(uint2 tid [[thread_position_in_grid]],
         ray.origin = camera.position;
         
         // Map normalized pixel coordinates into camera's coordinate system
-        ray.direction = normalize(uv.x * camera.right +
-                                  uv.y * camera.up +
-                                  camera.forward);
+        ray.direction = normalize(uv.x * camera.right + uv.y * camera.up + camera.forward);
+        
         // The camera emits primary rays
         ray.mask = RAY_MASK_PRIMARY;
         
         // Don't limit intersection distance
         ray.maxDistance = INFINITY;
         
-        // Start with a fully white color. Each bounce will scale the color as light
-        // is absorbed into surfaces.
+        // Start with a fully white color. Each bounce will scale the color as light is absorbed into surfaces.
         ray.color = float3(1.0f, 1.0f, 1.0f);
         
         // Clear the destination image to black
@@ -255,7 +267,6 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                         device Ray *rays,
                         device Ray *shadowRays,
                         device Intersection *intersections,
-//                        device float3 *vertexColors,
                         device float3 *vertexNormals,
                         device float2 *vertexCoords,
                         device uint *triangleMasks,
@@ -263,13 +274,8 @@ kernel void shadeKernel(uint2 tid [[thread_position_in_grid]],
                         device uint *indices,
                         constant unsigned int & bounce,
                         texture2d<unsigned int> randomTex,
-//                        array<texture2d<half>, MaterialSize> colorTexture,
                         array<texture2d<half>, MaxColorTextureSize> colorTextures,
                         texture2d<float, access::write> dstTex)
-// TODO:
-// create array of color textures and init in program like in Argument Buffer Array with Heaps example
-// use triangleMask similar but with material index per primitive (triangle). Access color textures with material index in turn
-
 {
     if (tid.x < uniforms.width && tid.y < uniforms.height) {
         unsigned int rayIdx = tid.y * uniforms.width + tid.x;

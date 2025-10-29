@@ -74,7 +74,6 @@ Implementation for our macOS view controller
 -(void) mouseExitedView: (NSEvent *) event
 {
     prevMouseLocation = [NSEvent mouseLocation];
-
 }
 
 -(bool) viewEvent: (NSEvent *) event

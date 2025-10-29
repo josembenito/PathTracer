@@ -49,7 +49,7 @@ typedef enum ColorTextures {
     RedConcreteMaterial,
     GreenConcreteMaterial,
     PlywoodMaterial,
-    MaterialSize,
+    DefaultColorTextureSize,
     MaxColorTextureSize = 64
 } ColorTextures;
 

@@ -11,14 +11,13 @@
 
 struct Meshgroup {
 
-	// geometry
 
     
     static const char* DefaultDiffuseMap;
     static const char* DefaultNormalMap;
     static const char* DefaultEmissiveMap;
     
-	// shader 
+	// shading
 	struct Texture {
 		unsigned char* image_data = nullptr;
 		int x = 0, y = 0, n = 0;
@@ -38,6 +37,7 @@ struct Meshgroup {
         vec3 emissive_base_color;
     };
 
+    // geometry
 	struct Mesh {
 
 //        const char name[128];
